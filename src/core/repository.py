@@ -58,26 +58,19 @@ class MapRepository:
             logger.error(f"DB Error saving map {map_id}: {e}")
 
     def _parse_map_data(self, j_map: Dict[str, Any], map_id: int) -> Dict[str, Any]:
-        """
-        Parses raw AWBW API data into the internal format.
-        Logic ported from src.utils.awbw_api.get_map to ensure consistency.
-        """
         map_data = dict()
 
         map_data["name"] = j_map.get("Name", "Unknown")
         map_data["id"] = map_id
         map_data["author"] = j_map.get("Author", "Unknown")
         map_data["player_count"] = int(j_map.get("Player Count", 0))
-        # Handle date parsing safely
+
         if "Published Date" in j_map:
-            map_data["published"] = j_map[
-                "Published Date"
-            ]  # Keep as string for JSON serialization or parse if needed
+            map_data["published"] = j_map["Published Date"]
 
         map_data["size_w"] = int(j_map.get("Size X", 0))
         map_data["size_h"] = int(j_map.get("Size Y", 0))
 
-        # Transpose Terrain Map: API returns columns, we want rows [y][x]
         if "Terrain Map" in j_map:
             map_data["terr"] = [list(r) for r in zip(*j_map["Terrain Map"])]
         else:
@@ -101,26 +94,18 @@ class MapRepository:
         loop = asyncio.get_running_loop()
 
         if not refresh:
-            # Run blocking DB call in executor
             data = await loop.run_in_executor(None, self._get_from_db, map_id)
             if data:
-                # Legacy cache migration: Check if data is raw (has "Size X" but not "size_w")
                 if "size_w" not in data and "Size X" in data:
                     logger.info(f"Migrating legacy cache for map {map_id}...")
                     data = self._parse_map_data(data, map_id)
-                    # Update DB with parsed data
                     await loop.run_in_executor(None, self._save_to_db, map_id, data)
 
                 logger.info(f"Loaded map {map_id} from DB cache.")
                 return data
 
-        # Fetch from API (already async)
         raw_data = await self.client.get_map(map_id)
-
-        # Parse/Normalize
         data = self._parse_map_data(raw_data, map_id)
-
-        # Save to DB in background (executor)
         await loop.run_in_executor(None, self._save_to_db, map_id, data)
 
         return data
@@ -129,9 +114,7 @@ class MapRepository:
         return os.path.join(self.cache_dir, f"{map_id}.png")
 
     def clear_cache(self, map_id: Optional[int] = None):
-        """Clears DB and File cache. If map_id is None, clears everything."""
         if map_id:
-            # specific map
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("DELETE FROM maps WHERE id = ?", (map_id,))
                 conn.commit()
@@ -141,12 +124,10 @@ class MapRepository:
                 os.remove(path)
             logger.info(f"Cleared cache for map {map_id}")
         else:
-            # all maps
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("DELETE FROM maps")
                 conn.commit()
 
-            # Clear file cache
             if os.path.exists(self.cache_dir):
                 for f in os.listdir(self.cache_dir):
                     if f.endswith(".png"):

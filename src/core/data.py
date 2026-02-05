@@ -1,4 +1,3 @@
-# Auto-generated from bitmap.py
 from typing import Dict, List, Tuple
 
 Color = Tuple[int, int, int]

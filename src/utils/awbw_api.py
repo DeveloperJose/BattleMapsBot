@@ -1,5 +1,3 @@
-
-# Site
 from aiohttp.client import ClientSession
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -10,34 +8,6 @@ UNSECURED_MAPS_API = "http://awbw.amarriner.com/api/map/map_info.php"
 
 
 async def get_map(maps_id: Optional[int] = None, verify: bool = False) -> Dict[str, Any]:
-
-    """Requests map info from AWBW Maps API
-
-    Map data returned in following format:
-    {
-        "name": "Map",              # str Map Name
-        "id": 12345,                # int Map ID
-        "author": "Author",         # str Author's AWBW username
-        "player_count": 2,          # int Number of playable countries
-        "published": datetime(),    # datetime Date map was created
-        "size_w": 3,                # int Map Width
-        "size_h": 3,                # int Map Height
-        "terr": [
-            [1, 2, 3],              # List[List[int]]
-            [4, 5, 6],              # 2D list representing terrain map
-            [7, 8, 9]               # By column, then by row: terr[y][x]
-        ],                          # In this example, 1: NW, 9: SE
-        "unit": [
-            {
-                "id": 1,            # int # List[Dict[str, Union[str, int]]]
-                "x": 1,             # int # List of dicts representing predeployed units
-                "y": 1,             # int # ID, XY position, and country
-                "ctry": "os"        # str
-            }
-        ]
-    }
-    """
-
     if not maps_id:
         raise ValueError("No valid map ID given.")
 
@@ -58,8 +28,7 @@ async def get_map(maps_id: Optional[int] = None, verify: bool = False) -> Dict[s
             try:
                 j_map = await response.json()
             except Exception:
-                # If JSON parsing fails, it might be an issue with the response body
-                 raise ConnectionError("Received invalid JSON from AWBW.")
+                raise ConnectionError("Received invalid JSON from AWBW.")
 
 
     if j_map.get("err", False):
@@ -90,91 +59,7 @@ async def get_map(maps_id: Optional[int] = None, verify: bool = False) -> Dict[s
 
     return map_data
 
-
 # def get_user(user_id: int = None) -> Dict[str, str]:
 #     pass
 
 
-"""
-USER_API Example
-
-payload = {"discord_user_id": 324036559504670731}
-
-response_json = {
-    "discord_user_id": 324036559504670731,
-    "awbw_username": "walkerboh01"
-}
-"""
-
-"""
-GAMES_API Example
-
-payload = {"games_id": 12345}
-
-response_json = {
-    "name": "Game Name",                    # str game_name
-    "status": "active",                     # str starting, active, ended
-    "maps_id":  12345,                      # int maps_id
-    "game_started": "date time",            # str datetime of game start
-    "last_update": "date time",             # str datetime of last update
-    "player_count": 1,                      # int number of players
-    "day": 5,                               # int current day of game
-    "players": [                            # list players
-        {
-            "name": "player AWBW name",     # str AWBW username for player
-            "country": "os",                # str country code for player
-            "co": "Andy",                   # str name of CO
-            "tag_co": "Sami",               # str name of tag CO or None
-            "funds": 10000,                 # int current owned funds
-            "team": "A",                    # str team if Teams, else None or all "A"
-            "defeated": False,              # bool if player is defeated
-            "open": False,                  # bool if position open on starting games
-        },
-        {
-            "name": "player AWBW name",     # str AWBW username for player
-            "country": "bm",                # str country code for player
-            "co": "Grit",                   # str name of active CO
-            "tag_co": "Max",                # str name of tag CO or None
-            "funds": 12000,                 # int current owned funds
-            "team": "A",                    # str team if Teams, else None or all "A"
-            "defeated": False,              # bool if player is defeated
-            "open": False,                  # bool if position open on starting games
-        }
-    ],
-    "settings":
-        {
-            "fog": False,                   # bool fog
-            "weather": "clear",             # str weather
-            "funds": 1000,                  # int daily funds
-            "powers": True,                 # bool powers on or off
-            "tag": True,                    # bool Tag or Single CO
-            "teams": False,                 # bool Teams or FFA
-        },
-    "limits":
-        {
-            "ban_co": ["Sturm", "Lash"],    # list str banned COs
-            "ban_unit": [1141438, 46],      # list int banned unit IDs
-            "lab_unit": [968731],           # list int lab-unlocked units
-            "unit_cap": 50,                 # int limit number of units
-            "days_cap": 0,                  # int limit number of days
-        },
-    "terrain_map": [[1, 2, 3],              # list list int current terrain map to
-                    [4, 5, 6],              # account for differences in captured
-                    [7, 8, 9]],             # properties, broken pipes, etc
-
-    "deployed_unit": [                      # list dict currently deployed units
-        {                                   # same as predeployed units for maps_id
-            "country": "os",                # but to show current state
-            "id": 1,                        # will ignore if FOW
-            "x": 1,
-            "y": 1
-        },
-        {
-            "country": "bm",
-            "id": 1,
-            "x": 5,
-            "y": 5
-        }
-    ]
-}
-"""

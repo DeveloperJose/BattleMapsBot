@@ -18,7 +18,6 @@ class NumpyRenderer:
     def _has_animated_content(
         self, terrain_ids: np.ndarray, unit_grid: np.ndarray
     ) -> bool:
-        """Check if the map contains any animated sprites."""
         unique_terr = np.unique(terrain_ids)
         unique_units = np.unique(unit_grid)
 
@@ -39,7 +38,6 @@ class NumpyRenderer:
         frame: int,
         is_static: bool = False,
     ) -> np.ndarray:
-        """Render a single frame of the map."""
         terrain_sprites = self.atlas[terrain_ids, frame]
 
         unit_sprites = self.atlas[unit_grid, frame]
@@ -62,10 +60,6 @@ class NumpyRenderer:
         return final_image_arr
 
     def render_map(self, map_data: Dict[str, Any]) -> Tuple[bool, io.BytesIO]:
-        """
-        Renders the map using vectorized Numpy operations.
-        Returns (is_animated, BytesIO).
-        """
         width = map_data["size_w"]
         height = map_data["size_h"]
         terrain_ids = np.array(map_data["terr"], dtype=np.int32)

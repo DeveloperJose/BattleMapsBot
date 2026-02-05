@@ -1,18 +1,4 @@
-
-# Lib
-
-# Site
 from typing import Dict, List, Tuple, Union
-
-# Local
-
-
-"""IDs and other tile data necessary constructing
-and manipulating `AWMap` instances"""
-
-"""###########################################
-   # Advance Wars Map Converter Internal IDs #
-   ###########################################"""
 
 # Internal Terrain IDs with internal names
 MAIN_TERR: Dict[int, str] = {
@@ -59,14 +45,12 @@ MAIN_TERR: Dict[int, str] = {
     999:    "NullTile",
 }
 
-
 # Create "Categories" for terrain type for tile awareness
 MAIN_TERR_CAT: Dict[str, List[int]] = {
     "land":         [1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 101, 102, 103, 104, 105, 106, 107],
     "sea":          [6, 8],
     "properties":   [101, 102, 103, 104, 105, 106, 107],
 }
-
 
 # Internal Unit IDs with internal names
 MAIN_UNIT: Dict[int, str] = {
@@ -99,7 +83,6 @@ MAIN_UNIT: Dict[int, str] = {
     46:     "Carrier",
 }
 
-
 # Internal Country IDs in country order
 MAIN_CTRY: Dict[int, str] = {
     0:      "Neutral",
@@ -124,11 +107,6 @@ MAIN_CTRY: Dict[int, str] = {
     19:     "Silver Claw",
     20:     "Umber Wilds"
 }
-
-
-"""######################################
-   # Advance Wars Series Map Editor IDs #
-   ######################################"""
 
 # Relate AWS Terrain IDs (keys) to Internal Terrain, Country ID pairs (values)
 AWS_TERR: Dict[int, Tuple[int, int]] = {
@@ -295,7 +273,6 @@ AWS_TERR: Dict[int, Tuple[int, int]] = {
     1054:   (503, 0),  # FlyingFortressLandSESE  # TODO: Add FlyingFortress SEA
 }
 
-
 # Relate AWS Unit IDs (keys) to Internal Unit, Country ID pairs (values)
 AWS_UNIT: Dict[int, Tuple[int, int]] = {
     65535:  (0,  0),   # Empty
@@ -435,11 +412,6 @@ AWS_UNIT: Dict[int, Tuple[int, int]] = {
     667:    (45, 5),   # BHBattleship
     690:    (46, 5),   # BHCarrier
 }
-
-
-"""###########################
-   # Advance Wars By Web IDs #
-   ###########################"""
 
 # Relate AWBW Terrain IDs (keys) to Internal Terrain, Country ID pairs (values)
 AWBW_TERR: Dict[int, Tuple[int, int]] = {
@@ -668,7 +640,6 @@ AWBW_TERR: Dict[int, Tuple[int, int]] = {
     223:    (105, 20),  # Umber Wilds Port
 }
 
-
 # Relate AWBW Unit IDs (keys) to Internal Unit IDs (values)
 AWBW_UNIT_CODE: Dict[int, int] = {
     1:          1,      # Infantry
@@ -698,7 +669,6 @@ AWBW_UNIT_CODE: Dict[int, int] = {
     1141438:    16,     # Megatank
 }
 
-
 # Relating 2 character AWBW country ID (keys) to Internal country ID (values)
 AWBW_COUNTRY_CODE: Dict[str, int] = {
     "os":   1,
@@ -723,12 +693,8 @@ AWBW_COUNTRY_CODE: Dict[str, int] = {
     "uw":   20
 }
 
-
 # From Internal Terrain IDs, find the offset for appropriate tile orientation based on surroundings.
-# AWBW_AWARENESS: Union[Dict[int, Dict[int, int]], Dict[str, Dict[int, List[int]]]] = {
-AWBW_AWARENESS: Dict[Union[int, str], Union[Dict[int, int], Dict[int, List[int]]]] = {
-    # Roads: Offset from 15
-    # Additionally aware of Bridge and Properties
+AWBW_AWARENESS: Dict[Union[int, str], Union[Dict[int, int], Dict[int, List[int]]]] = {# Roads: Offset from 15
     4:      {
         0:  0,
         1:  0,
@@ -747,9 +713,7 @@ AWBW_AWARENESS: Dict[Union[int, str], Union[Dict[int, int], Dict[int, List[int]]
         14: 10,
         15: 2
     },
-
-    # Bridge: Offset from 26
-    # Additionally aware of Land Tiles
+# Bridge: Offset from 26
     5:      {
         0:  0,
         1:  0,
@@ -768,9 +732,7 @@ AWBW_AWARENESS: Dict[Union[int, str], Union[Dict[int, int], Dict[int, List[int]]
         14: 1,
         15: 1
     },
-
-    # Shoal: Offset from 29
-    # Additionally aware of Land Tiles
+# Shoal: Offset from 29
     7:      {
         0:  0,
         1:  3,
@@ -789,9 +751,7 @@ AWBW_AWARENESS: Dict[Union[int, str], Union[Dict[int, int], Dict[int, List[int]]
         14: 2,
         15: 0
     },
-
-    # River: Offset from 4
-    # Additionally aware of Bridge
+# River: Offset from 4
     9:      {
         0:  0,
         1:  0,
@@ -810,9 +770,7 @@ AWBW_AWARENESS: Dict[Union[int, str], Union[Dict[int, int], Dict[int, List[int]]
         14: 10,
         15: 2
     },
-
-    # Pipe: Offset from 101
-    # Additionally aware of Pipe Seam and Destroyed Pipe Seam
+# Pipe: Offset from 101
     10:     {
         0:  0,
         1:  7,
@@ -831,9 +789,7 @@ AWBW_AWARENESS: Dict[Union[int, str], Union[Dict[int, int], Dict[int, List[int]]
         14: 0,
         15: 1
     },
-
-    # Pipe Seam: Offset from 113
-    # Additionally aware of Pipe and Destroyed Pipe Seam
+# Pipe Seam: Offset from 113
     11:     {
         0:  0,
         1:  0,
@@ -852,9 +808,7 @@ AWBW_AWARENESS: Dict[Union[int, str], Union[Dict[int, int], Dict[int, List[int]]
         14: 1,
         15: 0
     },
-
-    # Destroyed Pipe Seam: Offset from 115
-    # Additionally aware of Pipe and Pipe Seam
+# Destroyed Pipe Seam: Offset from 115
     12:     {
         0:  0,
         1:  0,
@@ -873,8 +827,7 @@ AWBW_AWARENESS: Dict[Union[int, str], Union[Dict[int, int], Dict[int, List[int]]
         14: 1,
         15: 0
     },
-
-    # Define which tile types MAIN terrain IDs should be aware of
+# Define which tile types MAIN terrain IDs should be aware of
     "aware_of": {
         4:  [4, 5, 13, 14, *MAIN_TERR_CAT["properties"]],  # Road
         5:  [7, *MAIN_TERR_CAT["land"]],  # Bridge  # TODO: Figure out why bridges are ignoring awareness
@@ -891,41 +844,20 @@ def find_overrides():
 
 
 def main_terr_to_aws(terr: int = 1, ctry: int = 0) -> List[int]:
-    """Takes internal terrain and country IDs and turns them into
-    appropriate terrain IDs for AWS. If no match is found, return
-    single item list [0] (0x00) which will be interpreted as plains
-
-    :param terr: internal terrain ID
-    :param ctry: internal country ID
-    :return: list of matching AWS unit IDs or 65535 (no unit)"""
-
-    # Default value: Plains
     default_value = [0]
-
-    # Relate Internal Terrain ID (keys) to AWS Terrain ID (values)
-    # Some possible terrains do not have an equivalent in
-    # AWS Map Editor. Override them to the closest equivalent
     override = {
-        14:     350,  # EmptySilo overridden to Silo
-        15:     167,  # Ruin      overridden to BrokenSeam
-        101:    102,  # NHQ       overridden to NCity
-        999:    921,  # NullTile  overridden to MinicannonSouth
+        14:     350,
+        15:     167,
+        101:    102,
+        999:    921,
     }
-
-    # Can have multiple matches
     match = list()
-
-    # Add all matching keys (AWS Terrain IDs) to list
     for k, v in AWS_TERR.items():
-
-        # Apply overrides if present
         if terr in override.keys():
             match.append(override[terr])
             break
         if (terr, ctry) == v:
             match.append(k)
-
-    # No match: empty list. Send default
     if match:
         return match
     else:
@@ -933,37 +865,17 @@ def main_terr_to_aws(terr: int = 1, ctry: int = 0) -> List[int]:
 
 
 def main_unit_to_aws(unit: int = 0, ctry: int = 1) -> List[int]:
-    """Takes internal unit and country IDs and turns them into
-    appropriate unit IDs for AWS. If no match is found, return
-    single item list [65535] (0xFF) to represent no unit for tile
-
-    :param unit: internal unit ID
-    :param ctry: internal country ID
-    :return: list of matching AWS unit IDs or 65535 (no unit)"""
-
-    # Default value: No Unit
     default_value = [65535]
-
-    # Relate Internal Unit ID (keys) to AWS Unit ID (values)
-    # I do not currently know a use case for overriding to a different unit
-    override = {  # TODO: Consider overriding extra AWBW countries to existing AWS (cart) countries?
-        999999:     999999,  # No overrides
+    override = {
+        999999:     999999,
     }
-
-    # Can have multiple matches
     match = list()
-
-    # Add all matching keys (AWS Unit IDs) to list
     for k, v in AWS_UNIT.items():
-
-        # Apply overrides if present
         if unit in override.keys():
             match.append(override[unit])
             break
         if (unit, ctry) == v:
             match.append(k)
-
-    # No match: empty list. Send default
     if match:
         return match
     else:
@@ -971,40 +883,17 @@ def main_unit_to_aws(unit: int = 0, ctry: int = 1) -> List[int]:
 
 
 def main_terr_to_awbw(terr: int = 1, ctry: int = 0) -> List[Union[str, int]]:
-    """Takes internal terrain and country IDs and turns them into
-    appropriate terrain IDs for AWBW. Tiles with more than one AWBW
-    ID due to having multiple variations (e.g. River), will be
-    returned in a list. If no match is found, return empty string
-    which will be interpreted as a blank (teleport) tile.
-
-    :param terr: internal terrain ID
-    :param ctry: internal country ID
-    :return: list of matching AWBW terrain IDs or empty string"""
-
-    # Default value: Blank/Teleport Tile
     default_value = [""]
-
-    # Relate Internal Terrain ID (keys) to AWS Terrain ID (values)
-    # Some possible terrains do not have an equivalent in
-    # AWS Map Editor. Override them to the closest equivalent
     override = {
-        999999:     999999,  # No overrides
+        999999:     999999,
     }
-
-    # Can have multiple matches
     match = list()
-
-    # Add all matching keys (AWBW Terrain IDs) to list
     for k, v in AWBW_TERR.items():
-
-        # Apply overrides if present
         if terr in override.keys():
             match.append(override[terr])
             break
         if (terr, ctry) == v:
             match.append(k)
-
-    # No match: emtpy list. Send default
     if match:
         return match
     else:

@@ -7,13 +7,9 @@ from src.core.repository import MapRepository
 class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # Repository instance to perform admin actions
-        # Note: This creates a separate instance than the one in Maps cog.
-        # Ideally we'd share, but since SQLite handles concurrency and they are stateless-ish wrappers, it's fine.
         self.repo = MapRepository()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        # Only allow bot owner to use these commands
         is_owner = await self.bot.is_owner(interaction.user)
         if not is_owner:
             await interaction.response.send_message("You are not authorized to use this command.", ephemeral=True)
@@ -24,21 +20,19 @@ class Admin(commands.Cog):
 
     @app_commands.command(name="sync", description="Sync slash commands")
     async def sync_tree(self, interaction: discord.Interaction):
-        """Syncs the slash command tree."""
         await interaction.response.defer(ephemeral=True)
         await self.bot.tree.sync()
         await interaction.followup.send("Slash commands synced.")
 
     @app_commands.command(name="reload", description="Reload all cogs")
     async def reload_all(self, interaction: discord.Interaction):
-        """Reloads all loaded cogs."""
         await interaction.response.defer(ephemeral=True)
-        
+
         reloaded = []
         failed = []
-        
+
         extensions = list(self.bot.extensions.keys())
-        
+
         for ext in extensions:
             try:
                 await self.bot.reload_extension(ext)
@@ -50,40 +44,30 @@ class Admin(commands.Cog):
         msg = f"**Reloaded ({len(reloaded)}):**\n" + "\n".join(reloaded)
         if failed:
             msg += f"\n\n**Failed ({len(failed)}):**\n" + "\n".join(failed)
-            
+
         await self.bot.tree.sync()
         msg += "\n\nSlash commands synced."
-        
+
         await interaction.followup.send(msg)
 
     @app_commands.command(name="map_refresh", description="Refresh a map's data and cache")
     @app_commands.describe(awbw_id="The ID of the map to refresh")
     async def map_refresh(self, interaction: discord.Interaction, awbw_id: int):
-        """Forces a refresh of a map from the API."""
         await interaction.response.defer(ephemeral=True)
-        
+
         try:
-            # Clear local cache first
             self.repo.clear_cache(awbw_id)
-            
-            # Fetch fresh data (refresh=True forces API call)
-            # But get_map_data handles the DB part.
-            # We must explicitly call with refresh=True if we added that param?
-            # Looking at repository.py: `async def get_map_data(self, map_id: int, refresh: bool = False)`
-            
             data = await self.repo.get_map_data(awbw_id, refresh=True)
-            
             await interaction.followup.send(f"Successfully refreshed map {awbw_id}: **{data.get('name')}**")
         except Exception as e:
             await interaction.followup.send(f"Failed to refresh map {awbw_id}: {e}")
 
     @app_commands.command(name="map_purge_cache", description="Purge ALL map caches (DB and Files)")
     async def map_purge_cache(self, interaction: discord.Interaction):
-        """Clears the entire map cache."""
         await interaction.response.defer(ephemeral=True)
-        
+
         try:
-            self.repo.clear_cache(None) # Clear all
+            self.repo.clear_cache(None)
             await interaction.followup.send("All map caches purged (Database and Files).")
         except Exception as e:
             await interaction.followup.send(f"Failed to purge cache: {e}")

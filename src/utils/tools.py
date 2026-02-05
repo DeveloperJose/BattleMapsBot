@@ -1,25 +1,14 @@
-"""Utility functions and classes.
-"""
-
-# Lib
 import sys
 from contextlib import contextmanager
 from io import StringIO, BytesIO
 from time import localtime, strftime
 from typing import Iterable, Literal, Tuple, Union
 
-# Site
 from aiohttp.client import ClientSession
-
-# Local
-
 
 ZWSP = u'\u200b'
 
-
 def _get_from_guilds(bot, getter, argument):
-    """Copied from discord.ext.commands.converter to prevent
-    access to protected attributes inspection error"""
     result = None
     for guild in bot.guilds:
         result = getattr(guild, getter)(argument)
@@ -79,7 +68,6 @@ def bool_str(arg):
 
 
 def flatten(items):
-    """Yield items from any nested iterable; see Reference."""
     for x in items:
         if isinstance(x, Iterable) and not isinstance(x, (str, bytes)):
             for sub_x in flatten(x):

@@ -14,8 +14,6 @@ class AWBWClient:
     
     def __init__(self):
         self._session: Optional[aiohttp.ClientSession] = None
-        # Limit to 2 requests per second.
-        # This acts as a queue: concurrent calls will wait here without blocking the event loop.
         self._limiter = AsyncLimiter(2, 1.0) 
 
     async def get_session(self) -> aiohttp.ClientSession:
@@ -40,7 +38,6 @@ class AWBWClient:
                     if response.status != 200:
                         raise ConnectionError(f"AWBW API returned status {response.status}")
                     
-                    # Sometimes API returns text/html for errors, handle that?
                     try:
                         data = await response.json()
                     except aiohttp.ContentTypeError:

@@ -23,7 +23,6 @@ class SpriteCache:
 
     def _build_atlas(self):
         logger.info("Building Sprite Atlas...")
-        # Determine max ID
         max_id = 0
         all_specs = [STATIC_ID_TO_SPEC, ANIM_ID_TO_SPEC, UNIT_ID_TO_SPEC]
         for d in all_specs:
@@ -31,38 +30,25 @@ class SpriteCache:
                 if ids:
                     max_id = max(max_id, max(ids))
 
-        # Populate animated_ids set
-        # Terrain animations
         for ids in ANIM_ID_TO_SPEC.values():
             self.animated_ids.update(ids)
-        # Unit animations (implicitly animated via flashing, but good to track)
         for ids in UNIT_ID_TO_SPEC.values():
             self.animated_ids.update(ids)
 
-        # Build the atlas
-        # Process in priority order: ANIM > STATIC > UNIT
-        # This ensures HQs (which share IDs with units) get the right sprite
         atlas = np.zeros((max_id + 1, 8, 4, 4, 4), dtype=np.uint8)
 
-        # Helper to parse grid string
         def parse_grid(grid_str):
             lines = grid_str.strip().split()
-            # Ensure 4x4
             grid = []
             for line in lines:
                 row = [int(c) for c in line.strip()]
                 if len(row) != 4:
-                    # fallback or error?
                     row = [0, 0, 0, 0]
                 grid.append(row)
             while len(grid) < 4:
                 grid.append([0, 0, 0, 0])
             return grid
 
-        # Process each spec in priority order
-        # ANIM_ID_TO_SPEC (HQs) first - highest priority
-        # STATIC_ID_TO_SPEC second
-        # UNIT_ID_TO_SPEC last - won't overwrite HQs
         priority_specs = [
             (ANIM_ID_TO_SPEC, "ANIM"),
             (STATIC_ID_TO_SPEC, "STATIC"),

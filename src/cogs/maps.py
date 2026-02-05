@@ -166,9 +166,9 @@ class Maps(commands.Cog):
             author_line = f"Design map by [{author}]({author_url})"
 
         preview_links = (
-            f"[Games](https://awbw.amarriner.com/gamescurrent.php?maps_id={awbw_id}) ᛫ "
-            f"[New Game](https://awbw.amarriner.com/create.php?maps_id={awbw_id}) ᛫ "
-            f"[Planner](https://awbw.amarriner.com/moveplanner.php?maps_id={awbw_id}) ᛫ "
+            f"[Games](https://awbw.amarriner.com/gamescurrent.php?maps_id={awbw_id}) | "
+            f"[New Game](https://awbw.amarriner.com/create.php?maps_id={awbw_id}) | "
+            f"[Planner](https://awbw.amarriner.com/moveplanner.php?maps_id={awbw_id}) | "
             f"[Map Analysis](https://awbw.amarriner.com/analysis.php?maps_id={awbw_id})"
         )
 

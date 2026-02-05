@@ -1,17 +1,4 @@
-
-# Directories
-/.idea/
-/TestFiles/
-/MP3/
-
-# Files
-/redis.json
-/test.pkl
-/BattleMaps.sh
-/BattleMaps.json
-
-# File patterns
-*-t.py*
+.env
 *__pycache__*
 
 # UV artifacts

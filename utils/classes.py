@@ -9,6 +9,7 @@ from traceback import extract_tb
 from typing import Any, Dict, Generator, List, Set, Tuple, Union
 
 # Site
+from discord import Intents
 from discord.appinfo import AppInfo
 from discord.channel import TextChannel
 from discord.colour import Colour
@@ -376,7 +377,13 @@ class Bot(DiscordBot):
         # Changed signature from arg to kwarg so I can splat the hgetall from db in main.py
         command_prefix: str = kwargs.pop("command_prefix", "!")
 
-        super().__init__(command_prefix, **kwargs)
+        # Setup intents for discord.py 2.x
+        intents = Intents.default()
+        intents.message_content = True
+        intents.members = True
+        intents.presences = True
+
+        super().__init__(command_prefix, intents=intents, **kwargs)
 
     def run(self, **kwargs):
         # Changed signature from arg to kwarg so I can splat the hgetall from db in main.py

@@ -7,6 +7,7 @@ maps on the AWBW Discord server"""
 from json import load
 
 # Site
+from discord import Intents
 from discord.activity import Activity
 from discord.channel import TextChannel
 from discord.ext.commands import when_mentioned

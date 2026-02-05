@@ -6,102 +6,20 @@ import traceback
 import logging
 from urllib.parse import quote
 from texttable import Texttable
+
 from src.core.repository import MapRepository
 from src.core.renderer import NumpyRenderer
-from src.utils.data.element_id import (
-    AWBW_TERR,
-    AWBW_COUNTRY_CODE,
-    AWBW_UNIT_CODE,
+from src.utils.awbw_data import (
+    UNIT_NAMES,
+    CTRY_NAMES,
 )
+from src.utils.map_helpers import format_k, count_properties, count_units
 
 logger = logging.getLogger(__name__)
 
 RE_AWL = re.compile(
     r"(?i)https?://(www\.)?awbw\.amarriner\.com/prevmaps\.php\?maps_id=(?P<id>[0-9]+)"
 )
-
-PROPERTY_TERRAINS = {101, 102, 103, 104, 105, 106, 107}
-
-PROPERTY_VALUE = {
-    101: 1000,
-    102: 1000,
-    103: 1000,
-    104: 1000,
-    105: 1000,
-    106: 0,
-    107: 0,
-}
-
-PROPERTY_NAMES = {
-    101: "HQ",
-    102: "City",
-    103: "Base",
-    104: "Air",
-    105: "Port",
-    106: "Tower",
-    107: "Lab",
-}
-
-UNIT_NAMES = {
-    1: "Infantry",
-    2: "Mech",
-    11: "APC",
-    12: "Recon",
-    13: "Tank",
-    14: "MDTank",
-    15: "Neotank",
-    16: "Megatank",
-    17: "AntiAir",
-    21: "Artillery",
-    22: "Rocket",
-    23: "Missile",
-    24: "PipeRunner",
-    25: "Oozium",
-    31: "TCopter",
-    32: "BCopter",
-    33: "Fighter",
-    34: "Bomber",
-    35: "Stealth",
-    36: "BBomb",
-    41: "BBoat",
-    42: "Lander",
-    43: "Cruiser",
-    44: "Submarine",
-    45: "Battleship",
-    46: "Carrier",
-}
-
-
-def format_k(num: float) -> str:
-    num = int(num)
-    if num >= 1000000:
-        return f"{num / 1000000:.2f}M"
-    elif num >= 1000:
-        return f"{num / 1000:.1f}k"
-    else:
-        return str(num)
-
-
-def count_properties(terr_map):
-    counts = {i: {} for i in range(21)}
-    total_income = {i: 0 for i in range(21)}
-    for row in terr_map:
-        for terr_id in row:
-            terr, ctry = AWBW_TERR.get(terr_id, (0, 0))
-            if terr in PROPERTY_TERRAINS and 0 <= ctry <= 20:
-                counts[ctry][terr] = counts[ctry].get(terr, 0) + 1
-                total_income[ctry] += PROPERTY_VALUE.get(terr, 0)
-    return counts, total_income
-
-
-def count_units(unit_list):
-    counts = {i: {} for i in range(21)}
-    for u in unit_list:
-        ctry_id = AWBW_COUNTRY_CODE.get(u.get("ctry", ""), 0)
-        unit_type_id = AWBW_UNIT_CODE.get(u.get("id", 0), 0)
-        if ctry_id in counts:
-            counts[ctry_id][unit_type_id] = counts[ctry_id].get(unit_type_id, 0) + 1
-    return counts
 
 
 class TabbedMapView(ui.View):
@@ -137,7 +55,9 @@ class TabbedMapView(ui.View):
     async def tab_units(self, interaction: discord.Interaction, button: ui.Button):
         await self.update_tab(interaction, button, "units")
 
-    async def update_tab(self, interaction: discord.Interaction, button: ui.Button, tab_name: str):
+    async def update_tab(
+        self, interaction: discord.Interaction, button: ui.Button, tab_name: str
+    ):
         self.set_active_button(button)
         await interaction.response.edit_message(embed=self.embeds[tab_name], view=self)
 
@@ -174,30 +94,6 @@ class Maps(commands.Cog):
 
         prop_counts, income = count_properties(map_data.get("terr", []))
         unit_counts = count_units(map_data.get("unit", []))
-
-        ctry_names = {
-            0: "Neutral",
-            1: "Orange Star",
-            2: "Blue Moon",
-            3: "Green Earth",
-            4: "Yellow Comet",
-            5: "Black Hole",
-            6: "Red Fire",
-            7: "Grey Sky",
-            8: "Brown Desert",
-            9: "Amber Blaze",
-            10: "Jade Sun",
-            11: "Cobalt Ice",
-            12: "Pink Cosmos",
-            13: "Teal Galaxy",
-            14: "Purple Lightning",
-            15: "Acid Rain",
-            16: "White Nova",
-            17: "Azure Asteroid",
-            18: "Noir Eclipse",
-            19: "Silver Claw",
-            20: "Umber Wilds",
-        }
 
         active_ctries = [
             i for i in range(21) if prop_counts.get(i) or unit_counts.get(i)
@@ -277,7 +173,7 @@ class Maps(commands.Cog):
             )
 
             for ctry_id in active_ctries:
-                name = ctry_names.get(ctry_id, f"Country {ctry_id}")
+                name = CTRY_NAMES.get(ctry_id, f"Country {ctry_id}")
                 props = prop_counts.get(ctry_id, {})
                 hq = props.get(101, 0)
                 city = props.get(102, 0)
@@ -299,7 +195,12 @@ class Maps(commands.Cog):
                     | Texttable.VLINES
                 )
                 table.set_cols_align(["l", "r", "r", "r", "r", "r", "r"])
-                table.add_rows([["HQ", "Lab", "Tower", "City", "Base", "Airport", "Port"], [hq, lab, tower, city, base, air, port]])
+                table.add_rows(
+                    [
+                        ["HQ", "Lab", "Tower", "City", "Base", "Airport", "Port"],
+                        [hq, lab, tower, city, base, air, port],
+                    ]
+                )
 
                 prop_embed.add_field(
                     name=f"{name} ({inc}/day)",
@@ -310,7 +211,7 @@ class Maps(commands.Cog):
             for ctry_id in active_ctries:
                 if ctry_id == 0:
                     continue
-                name = ctry_names.get(ctry_id, f"Country {ctry_id}")
+                name = CTRY_NAMES.get(ctry_id, f"Country {ctry_id}")
                 units = unit_counts.get(ctry_id, {})
                 if not units:
                     unit_embed.add_field(name=name, value="—", inline=False)

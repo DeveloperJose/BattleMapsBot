@@ -3,6 +3,7 @@ from discord.ext import commands
 from src.config import DISCORD_TOKEN
 import sys
 
+
 class BattleMapsBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
@@ -10,10 +11,7 @@ class BattleMapsBot(commands.Bot):
         super().__init__(command_prefix=lambda _b, _m: [], intents=intents)
 
     async def setup_hook(self):
-        extensions = [
-            "src.cogs.maps",
-            "src.cogs.admin"
-        ]
+        extensions = ["src.cogs.maps", "src.cogs.admin"]
 
         for ext in extensions:
             try:
@@ -23,7 +21,7 @@ class BattleMapsBot(commands.Bot):
                 print(f"Failed to load extension {ext}: {e}")
 
     async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
+        print(f"Logged in as {self.user} (ID: {self.user.id})")
 
 
 bot = BattleMapsBot()
@@ -37,17 +35,18 @@ if __name__ == "__main__":
         try:
             bot.run(DISCORD_TOKEN)
         except discord.errors.PrivilegedIntentsRequired:
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("CRITICAL ERROR: Privileged Intents are not enabled.")
-            print("="*60)
-            print("1. Go to the Discord Developer Portal: https://discord.com/developers/applications/")
+            print("=" * 60)
+            print(
+                "1. Go to the Discord Developer Portal: https://discord.com/developers/applications/"
+            )
             print("2. Select your application -> Bot")
             print("3. Scroll down to 'Privileged Gateway Intents'")
             print("4. Enable 'MESSAGE CONTENT INTENT'")
             print("5. Save Changes")
-            print("="*60 + "\n")
+            print("=" * 60 + "\n")
             sys.exit(1)
         except Exception as e:
             print(f"Error starting bot: {e}")
             sys.exit(1)
-

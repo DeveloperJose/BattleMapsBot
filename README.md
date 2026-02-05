@@ -5,6 +5,8 @@ A discord bot for previewing Advance Wars By Web (AWBW) maps.
 ## Features
 
 - `/map <awbw_id>`: Generates a preview image (PNG or GIF) of an AWBW map.
+- **Link Detection**: Automatically generates previews when an AWBW map link is posted in chat.
+- **Hot-Reloading**: Use `/reload` (owner only) to update code without restarting.
 
 ## Setup
 

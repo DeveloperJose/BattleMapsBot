@@ -1,9 +1,6 @@
 import discord
-from discord import app_commands
 from discord.ext import commands
 from src.config import DISCORD_TOKEN
-from src.utils.awmap import AWMap, AWMinimap
-import io
 import sys
 
 # Ensure src is in path if running as module or script
@@ -12,11 +9,38 @@ import sys
 
 class BattleMapsBot(commands.Bot):
     def __init__(self):
+        # Enable message content intent to read messages for links
         intents = discord.Intents.default()
-        # Message content might be needed if we were using prefix commands, but for slash interactions it's fine.
-        super().__init__(command_prefix="!", intents=intents)
+        intents.message_content = True
+        
+        # We don't use prefix commands, but the library requires a prefix argument.
+        # We set it to a dummy value or a function that returns an empty list (if allowed, 
+        # but empty strings/lists can be tricky). 
+        # The cleanest way to "disable" it while satisfying the constructor is 
+        # to use a prefix that nobody will likely use, or just minimal setup.
+        # However, passing None or empty string might cause issues if not handled carefully.
+        # We'll use a dummy prefix that effectively does nothing useful since we have no text commands.
+        super().__init__(command_prefix=lambda _b, _m: [], intents=intents)
 
     async def setup_hook(self):
+
+        # Load extensions
+        extensions = [
+            "src.cogs.maps",
+            "src.cogs.admin"
+        ]
+        
+        for ext in extensions:
+            try:
+                await self.load_extension(ext)
+                print(f"Loaded extension: {ext}")
+            except Exception as e:
+                print(f"Failed to load extension {ext}: {e}")
+                
+        # Syncing is now handled manually by the admin cog or on first run if needed
+        # But for development it's often good to sync on startup. 
+        # CAUTION: Global sync can be slow and rate-limited.
+        # For now we will keep it for simplicity.
         await self.tree.sync()
         print("Commands synced")
 
@@ -24,40 +48,6 @@ class BattleMapsBot(commands.Bot):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
 
 bot = BattleMapsBot()
-
-@bot.tree.command(name="map", description="Preview an AWBW map")
-@app_commands.describe(awbw_id="The ID of the AWBW map")
-async def map_preview(interaction: discord.Interaction, awbw_id: int):
-    # Defer response as map generation might take > 3 seconds
-    await interaction.response.defer()
-    
-    try:
-        awmap = AWMap()
-        # Verify connection implicitly via https, but allow failure
-        await awmap.from_awbw(awbw_id=awbw_id)
-        
-        # Manually create minimap to check for animation
-        minimap = AWMinimap(awmap)
-        image_bytes = minimap.map
-        
-        # Check if animated
-        is_animated = minimap.animated
-        ext = "gif" if is_animated else "png"
-        filename = f"awbw_{awbw_id}.{ext}"
-        
-        file = discord.File(image_bytes, filename=filename)
-        
-        embed = discord.Embed(title=awmap.title, url=f"https://awbw.amarriner.com/prevmaps.php?maps_id={awbw_id}")
-        embed.set_image(url=f"attachment://{filename}")
-        embed.set_footer(text=f"Map by {awmap.author}")
-        
-        await interaction.followup.send(embed=embed, file=file)
-        
-    except Exception as e:
-        # Print error to console for debugging
-        import traceback
-        traceback.print_exc()
-        await interaction.followup.send(f"Error loading map: {e}")
 
 if __name__ == "__main__":
     if not DISCORD_TOKEN:

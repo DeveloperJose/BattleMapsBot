@@ -13,3 +13,10 @@
 # File patterns
 *-t.py*
 *__pycache__*
+
+# UV artifacts
+/.venv/
+/venv/
+/.uv/
+uv.lock
+.uv.lock

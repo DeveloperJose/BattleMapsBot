@@ -20,6 +20,13 @@ class BattleMapsBot(commands.Bot):
             except Exception as e:
                 print(f"Failed to load extension {ext}: {e}")
 
+        # await self.tree.sync()
+        # print("Global slash commands synced.")
+        #
+        # TEST_GUILD_ID = 1183697275491455068
+        # await self.tree.sync(guild=discord.Object(TEST_GUILD_ID))
+        # print("Guild-specific slash commands synced.")
+
     async def on_ready(self):
         print(f"Logged in as {self.user} (ID: {self.user.id})")
 

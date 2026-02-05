@@ -2,7 +2,7 @@ import numpy as np
 import io
 from typing import Dict, Any, Tuple
 from PIL import Image
-from src.core.resources import SpriteCache
+from src.core.resources import SpriteCache, UNIT_ID_OFFSET
 from src.utils.data.element_id import AWBW_TERR, AWBW_UNIT_CODE
 import logging
 
@@ -43,7 +43,7 @@ class NumpyRenderer:
         unit_sprites = self.atlas[unit_grid, frame]
 
         if not is_static:
-            units_on_frame = 1 < frame < 6
+            units_on_frame = 0 < frame < 5
             if not units_on_frame:
                 unit_sprites = np.zeros_like(unit_sprites)
 
@@ -86,7 +86,8 @@ class NumpyRenderer:
             internal_unit = AWBW_UNIT_CODE.get(u_id, 0)
             ctry_id = AWBW_COUNTRY_CODE.get(ctry_str, 0)
 
-            sprite_id = internal_unit + (ctry_id * 100)
+            # Apply offset to separate unit IDs from terrain IDs
+            sprite_id = internal_unit + (ctry_id * 100) + UNIT_ID_OFFSET
 
             if 0 <= y < height and 0 <= x < width:
                 unit_grid[y, x] = sprite_id
@@ -122,6 +123,7 @@ class NumpyRenderer:
                 loop=0,
                 duration=150,
                 optimize=False,
+                disposal=2,
                 version="GIF89a",
             )
             out.seek(0)

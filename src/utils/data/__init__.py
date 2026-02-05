@@ -22,7 +22,7 @@ from .element_id import (
     main_unit_to_aws
 )
 
-from .bitmap import (
+from src.core.data import (
     BITMAP_SPEC,
     STATIC_ID_TO_SPEC,
     ANIM_ID_TO_SPEC,

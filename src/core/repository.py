@@ -72,7 +72,7 @@ class MapRepository:
         map_data["size_h"] = int(j_map.get("Size Y", 0))
 
         if "Terrain Map" in j_map:
-            map_data["terr"] = [list(r) for r in zip(*j_map["Terrain Map"])]
+            map_data["terr"] = j_map["Terrain Map"]
         else:
             map_data["terr"] = []
 

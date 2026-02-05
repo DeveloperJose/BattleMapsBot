@@ -3,6 +3,7 @@
 
 cache/
 data/
+test_output/
 
 # UV artifacts
 /.venv/

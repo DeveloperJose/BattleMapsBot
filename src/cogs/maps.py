@@ -86,9 +86,9 @@ class Maps(commands.Cog):
             author_line = f"Design map by [{author}]({author_url})"
 
         preview_links = (
-            f"[Games](https://awbw.amarriner.com/gamescurrent.php?maps_id={awbw_id}) | "
-            f"[New Game](https://awbw.amarriner.com/create.php?maps_id={awbw_id}) | "
-            f"[Planner](https://awbw.amarriner.com/moveplanner.php?maps_id={awbw_id}) | "
+            f"[Games](https://awbw.amarriner.com/gamescurrent.php?maps_id={awbw_id}) ・ "
+            f"[New Game](https://awbw.amarriner.com/create.php?maps_id={awbw_id}) ・ "
+            f"[Planner](https://awbw.amarriner.com/moveplanner.php?maps_id={awbw_id}) ・ "
             f"[Map Analysis](https://awbw.amarriner.com/analysis.php?maps_id={awbw_id})"
         )
 
@@ -102,14 +102,11 @@ class Maps(commands.Cog):
 
         size_w = map_data.get("size_w", 0)
         size_h = map_data.get("size_h", 0)
-        published = map_data.get("published", "Unknown")
+        published = map_data.get("published", "Unknown")[:10]
         active_players = len([i for i in active_ctries if i != 0])
 
         header_desc = (
-            f"{author_line}\n"
-            f"**Players**: {active_players}\n"
-            f"**Size**: {size_w}x{size_h}\n"
-            f"**Published**: {published}\n\n"
+            f"{author_line} ・ Players: {active_players} ・ Size: {size_w}x{size_h} ・ Published: {published}\n\n"
             f"{preview_links}"
         )
 

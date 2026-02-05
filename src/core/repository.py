@@ -9,10 +9,11 @@ from src.core.awbw import AWBWClient
 
 logger = logging.getLogger(__name__)
 
+
 class MapRepository:
     def __init__(self, db_path: str = "data/maps.db"):
         self.db_path = db_path
-        self.cache_dir = "cache/maps"
+        self.cache_dir = "data/cache"
         self._ensure_dirs()
         self._init_db()
         self.client = AWBWClient()
@@ -35,7 +36,9 @@ class MapRepository:
     def _get_from_db(self, map_id: int) -> Optional[Dict[str, Any]]:
         try:
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute("SELECT json_data FROM maps WHERE id = ?", (map_id,))
+                cursor = conn.execute(
+                    "SELECT json_data FROM maps WHERE id = ?", (map_id,)
+                )
                 row = cursor.fetchone()
                 if row:
                     return json.loads(row[0])
@@ -48,7 +51,7 @@ class MapRepository:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute(
                     "INSERT OR REPLACE INTO maps (id, json_data, updated_at) VALUES (?, ?, ?)",
-                    (map_id, json.dumps(data), datetime.now().isoformat())
+                    (map_id, json.dumps(data), datetime.now().isoformat()),
                 )
                 conn.commit()
         except Exception as e:
@@ -67,11 +70,13 @@ class MapRepository:
         map_data["player_count"] = int(j_map.get("Player Count", 0))
         # Handle date parsing safely
         if "Published Date" in j_map:
-            map_data["published"] = j_map["Published Date"] # Keep as string for JSON serialization or parse if needed
-        
+            map_data["published"] = j_map[
+                "Published Date"
+            ]  # Keep as string for JSON serialization or parse if needed
+
         map_data["size_w"] = int(j_map.get("Size X", 0))
         map_data["size_h"] = int(j_map.get("Size Y", 0))
-        
+
         # Transpose Terrain Map: API returns columns, we want rows [y][x]
         if "Terrain Map" in j_map:
             map_data["terr"] = [list(r) for r in zip(*j_map["Terrain Map"])]
@@ -81,10 +86,10 @@ class MapRepository:
         units = list()
         for unit in j_map.get("Predeployed Units", []):
             unit_dict = {
-                "id":   int(unit.get("Unit ID", 0)),
-                "x":    int(unit.get("Unit X", 0)),
-                "y":    int(unit.get("Unit Y", 0)),
-                "ctry": unit.get("Country Code", "")
+                "id": int(unit.get("Unit ID", 0)),
+                "x": int(unit.get("Unit X", 0)),
+                "y": int(unit.get("Unit Y", 0)),
+                "ctry": unit.get("Country Code", ""),
             }
             units.append(unit_dict)
 
@@ -105,19 +110,19 @@ class MapRepository:
                     data = self._parse_map_data(data, map_id)
                     # Update DB with parsed data
                     await loop.run_in_executor(None, self._save_to_db, map_id, data)
-                
+
                 logger.info(f"Loaded map {map_id} from DB cache.")
                 return data
 
         # Fetch from API (already async)
         raw_data = await self.client.get_map(map_id)
-        
+
         # Parse/Normalize
         data = self._parse_map_data(raw_data, map_id)
 
         # Save to DB in background (executor)
         await loop.run_in_executor(None, self._save_to_db, map_id, data)
-        
+
         return data
 
     def get_cache_path(self, map_id: int) -> str:
@@ -130,7 +135,7 @@ class MapRepository:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("DELETE FROM maps WHERE id = ?", (map_id,))
                 conn.commit()
-            
+
             path = self.get_cache_path(map_id)
             if os.path.exists(path):
                 os.remove(path)
@@ -140,7 +145,7 @@ class MapRepository:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("DELETE FROM maps")
                 conn.commit()
-            
+
             # Clear file cache
             if os.path.exists(self.cache_dir):
                 for f in os.listdir(self.cache_dir):

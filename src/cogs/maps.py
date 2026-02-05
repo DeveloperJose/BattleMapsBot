@@ -4,6 +4,7 @@ from discord.ext import commands
 import re
 import traceback
 import logging
+from urllib.parse import quote
 from src.core.repository import MapRepository
 from src.core.renderer import NumpyRenderer
 
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Regex to find AWBW map links
 RE_AWL = re.compile(
-    r"(?i)(http[s]?://)?(www\.)?awbw.amarriner.com/(glenstorm/|2030/)?prevmaps.php\?maps_id=(?P<id>[0-9]+)"
+    r"(?i)https?://(www\.)?awbw\.amarriner\.com/prevmaps\.php\?maps_id=(?P<id>[0-9]+)"
 )
 
 
@@ -29,10 +30,8 @@ class Maps(commands.Cog):
     ) -> tuple[discord.Embed, discord.File] | None:
         """Generates the embed and file for a map preview."""
         try:
-            # Fetch Map Data (Cache -> API -> DB)
             map_data = await self.repo.get_map_data(awbw_id)
 
-            # Render Map using NumpyRenderer (Fast & GIF capable)
             is_animated, image_bytes = self.renderer.render_map(map_data)
 
             ext = "gif" if is_animated else "png"
@@ -40,14 +39,30 @@ class Maps(commands.Cog):
 
             file = discord.File(image_bytes, filename=filename)
 
-            # Construct Embed
+            author = map_data.get("author", "Unknown")
+            author_url = (
+                f"https://awbw.amarriner.com/profile.php?username={quote(author)}"
+            )
+
+            if author == "[Unknown]":
+                desc = "Design map by [Unknown]"
+            else:
+                desc = f"Design map by [{author}]({author_url})"
+
+            desc = (
+                f"{desc}\n\n"
+                f"[Games](https://awbw.amarriner.com/gamescurrent.php?maps_id={awbw_id}) ᛫ "
+                f"[New Game](https://awbw.amarriner.com/create.php?maps_id={awbw_id}) ᛫ "
+                f"[Planner](https://awbw.amarriner.com/moveplanner.php?maps_id={awbw_id}) ᛫ "
+                f"[Map Analysis](https://awbw.amarriner.com/analysis.php?maps_id={awbw_id})"
+            )
+
             embed = discord.Embed(
                 title=map_data.get("name", f"Map {awbw_id}"),
                 url=f"https://awbw.amarriner.com/prevmaps.php?maps_id={awbw_id}",
+                description=desc,
             )
             embed.set_image(url=f"attachment://{filename}")
-            author = map_data.get("author", "Unknown")
-            embed.set_footer(text=f"Map by {author}")
 
             return embed, file
 
@@ -59,7 +74,6 @@ class Maps(commands.Cog):
     @app_commands.command(name="map", description="Preview an AWBW map")
     @app_commands.describe(awbw_id="The ID of the AWBW map")
     async def map_preview(self, interaction: discord.Interaction, awbw_id: int):
-        # Defer response as map generation might take > 3 seconds (mostly network)
         await interaction.response.defer()
 
         result = await self.generate_map_preview(awbw_id)
@@ -74,15 +88,12 @@ class Maps(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        # Ignore messages from bots
         if message.author.bot:
             return
 
-        # Check for map links
         match = RE_AWL.search(message.content)
         if match:
             map_id = int(match.group("id"))
-            # Trigger typing to indicate processing
             async with message.channel.typing():
                 result = await self.generate_map_preview(map_id)
 

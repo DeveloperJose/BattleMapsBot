@@ -265,16 +265,20 @@ class AWMap:
             for unit in map_data["unit"]:
                 # Ensure we handle both raw API keys (if any leaked) and internal keys
                 u_id = unit.get("id")
-                if u_id is None: u_id = unit.get("Unit ID")
+                if u_id is None:
+                    u_id = unit.get("Unit ID")
 
                 u_x = unit.get("x")
-                if u_x is None: u_x = unit.get("Unit X")
+                if u_x is None:
+                    u_x = unit.get("Unit X")
                 
                 u_y = unit.get("y")
-                if u_y is None: u_y = unit.get("Unit Y")
+                if u_y is None:
+                    u_y = unit.get("Unit Y")
                 
                 u_ctry = unit.get("ctry")
-                if u_ctry is None: u_ctry = unit.get("Country Code")
+                if u_ctry is None:
+                    u_ctry = unit.get("Country Code")
 
                 main_id = AWBW_UNIT_CODE.get(int(u_id) if u_id is not None else 0)
                 main_ctry = AWBW_COUNTRY_CODE.get(u_ctry)

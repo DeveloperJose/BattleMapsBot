@@ -4,6 +4,10 @@ from typing import Dict, List, Tuple
 Color = Tuple[int, int, int]
 
 PALETTE: Dict[str, Color] = {
+    "BLINK": [
+        (43,  37,  32),  (79,  69,  60),  (122, 106, 92),  (196, 186, 176),
+        (239, 236, 233), (196, 186, 176), (122, 106, 92),  (79,  69,  60)
+    ],
     "white": (255, 255, 255),
     "green1": (168, 240, 80),
     "green2": (104, 232, 56),
@@ -521,7 +525,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -535,7 +539,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -549,7 +553,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -563,7 +567,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -577,7 +581,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -591,7 +595,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -605,7 +609,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -619,7 +623,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -633,7 +637,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -647,7 +651,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -661,7 +665,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -675,7 +679,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -689,7 +693,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -703,7 +707,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -717,7 +721,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -731,7 +735,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -745,7 +749,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -759,7 +763,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -773,7 +777,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -1175,7 +1179,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001
@@ -1223,7 +1227,7 @@ SPRITES: Dict[str, List[Tuple[str, str]]] = {
             0110
             0000
         """),
-        ("white", """
+        ("BLINK", """
             1111
             1001
             1001

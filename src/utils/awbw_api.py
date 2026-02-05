@@ -59,7 +59,7 @@ async def get_map(maps_id: Optional[int] = None, verify: bool = False) -> Dict[s
                 j_map = await response.json()
             except Exception:
                 # If JSON parsing fails, it might be an issue with the response body
-                 raise ConnectionError(f"Received invalid JSON from AWBW.")
+                 raise ConnectionError("Received invalid JSON from AWBW.")
 
 
     if j_map.get("err", False):

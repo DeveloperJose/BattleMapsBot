@@ -120,7 +120,9 @@ MAIN_CTRY: Dict[int, str] = {
     15:     "Acid Rain",
     16:     "White Nova",
     17:     "Azure Asteroid",
-    18:     "Noir Eclipse"
+    18:     "Noir Eclipse",
+    19:     "Silver Claw",
+    20:     "Umber Wilds"
 }
 
 
@@ -649,6 +651,21 @@ AWBW_TERR: Dict[int, Tuple[int, int]] = {
     208:    (107, 18),  # Noir Eclipse Lab
     209:    (105, 18),  # Noir Eclipse Port
 
+    210:    (104, 19),  # Silver Claw Airport
+    211:    (103, 19),  # Silver Claw Base
+    212:    (102, 19),  # Silver Claw City
+    213:    (106, 19),  # Silver Claw Com Tower
+    214:    (101, 19),  # Silver Claw HQ
+    215:    (107, 19),  # Silver Claw Lab
+    216:    (105, 19),  # Silver Claw Port
+
+    217:    (104, 20),  # Umber Wilds Airport
+    218:    (103, 20),  # Umber Wilds Base
+    219:    (102, 20),  # Umber Wilds City
+    220:    (106, 20),  # Umber Wilds Com Tower
+    221:    (101, 20),  # Umber Wilds HQ
+    222:    (107, 20),  # Umber Wilds Lab
+    223:    (105, 20),  # Umber Wilds Port
 }
 
 
@@ -701,7 +718,9 @@ AWBW_COUNTRY_CODE: Dict[str, int] = {
     "ar":   15,
     "wn":   16,
     "aa":   17,
-    "ne":   18
+    "ne":   18,
+    "sc":   19,
+    "uw":   20
 }
 
 

@@ -23,10 +23,28 @@ from .element_id import (
 )
 
 from .bitmap import (
-    BITMAP_PALETTE,
     BITMAP_SPEC,
-
     STATIC_ID_TO_SPEC,
-    UNIT_ID_TO_SPEC,
-    ANIM_ID_TO_SPEC
+    ANIM_ID_TO_SPEC,
+    UNIT_ID_TO_SPEC
 )
+
+__all__ = [
+    "MAIN_TERR",
+    "MAIN_CTRY",
+    "MAIN_UNIT",
+    "MAIN_TERR_CAT",
+    "AWS_TERR",
+    "AWS_UNIT",
+    "AWBW_TERR",
+    "AWBW_UNIT_CODE",
+    "AWBW_COUNTRY_CODE",
+    "AWBW_AWARENESS",
+    "main_terr_to_awbw",
+    "main_terr_to_aws",
+    "main_unit_to_aws",
+    "BITMAP_SPEC",
+    "STATIC_ID_TO_SPEC",
+    "ANIM_ID_TO_SPEC",
+    "UNIT_ID_TO_SPEC"
+]

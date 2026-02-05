@@ -9,7 +9,24 @@ BattleMapsBot is a Discord utility bot for the AWBW (Advance Wars By Web) server
 - **Python Version:** >= 3.12
 - **Structure:** `src/` layout.
 
-## 2. Build & Run Commands
+## 2. Architecture & Design
+The bot uses a high-performance architecture for map rendering:
+- **Core (`src/core/`):**
+    - `awbw.py`: API Client with `aiolimiter` for rate limiting (max 2 req/s).
+    - `repository.py`: Offline-first data layer using SQLite (`data/maps.db`) and Filesystem Cache (`cache/maps/`).
+    - `renderer.py`: **Numpy-based** vectorized renderer. Generates maps instantly using a pre-compiled Sprite Atlas.
+    - `resources.py`: Manages the Sprite Atlas (compiled from `data.py`).
+    - `data.py`: Contains sprite definitions and ID mappings (migrated from `bitmap.py`).
+- **Commands (`src/cogs/`):**
+    - `maps.py`: Handles `/map` command using `MapRepository` and `NumpyRenderer`.
+    - `admin.py`: Handles admin commands (`/sync`, `/reload`, `/map_refresh`, `/map_purge_cache`).
+
+**Key Constraints:**
+- **No External Cloud:** Do not add Redis or AWS S3. Use SQLite and local files.
+- **Speed:** Prefer Numpy operations for image manipulation over `PIL` loops.
+- **Rate Limiting:** Always use `AWBWClient` or `MapRepository` to fetch data. Never request `awbw.amarriner.com` directly in loops without limiting.
+
+## 3. Build & Run Commands
 Always use `uv run` to execute commands within the project environment.
 
 ### Setup
@@ -36,17 +53,13 @@ uv run ruff format .
 ```
 
 ### Testing
-*Note: The project uses `pytest`.*
-```bash
-# Run all tests
-uv run pytest
-```
+*Note: Testing frameworks (pytest) have been removed. Manual verification via bot commands is preferred.*
 
-## 3. Code Style Guidelines
+## 4. Code Style Guidelines
 
 ### Imports
 1.  **Lib** (Standard Library)
-2.  **Site** (Third-party packages)
+2.  **Site** (Third-party packages: `numpy`, `discord`, `aiohttp`, `PIL`)
 3.  **Local** (Project modules, relative or absolute `src.`)
 
 ### Naming Conventions
@@ -55,20 +68,12 @@ uv run pytest
 - **Variables:** `snake_case`
 - **Constants:** `SCREAMING_SNAKE_CASE`
 
-### Typing
-- Use type hints for all function arguments and return values.
-- Use `typing` module (e.g., `List`, `Union`, `Optional`) or modern syntax (`list[]`, `|`) if compatible with Python 3.12+.
-
 ### Async
 - Prefer `aiohttp` for network requests. Avoid blocking `requests`.
 
-## 4. File Structure
+## 5. File Structure
 - `src/`: Main source code.
   - `main.py`: Entry point.
-  - `config.py`: Configuration loading.
-  - `utils/`: Utility modules (`awmap`, `awbw_api`, etc.).
-- `archive_v1/`: Archived version 1 of the bot.
-
-## 5. General Rules
-- **Dependencies:** Do not add new dependencies without checking if an existing one suffices.
-- **Safety:** Never commit secrets (tokens, passwords). Use `.env`.
+  - `core/`: Core business logic (API, DB, Rendering).
+  - `cogs/`: Discord command modules.
+  - `utils/`: Shared constants (`element_id.py`).

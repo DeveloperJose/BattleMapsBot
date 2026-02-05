@@ -117,7 +117,7 @@ class TabbedMapView(ui.View):
         custom_id="map_tab_preview",
     )
     async def tab_preview(self, interaction: discord.Interaction, button: ui.Button):
-        await interaction.response.edit_message(embed=self.embeds["preview"], view=self)
+        await self.update_tab(interaction, button, "preview")
 
     @ui.button(
         label="Properties",
@@ -126,9 +126,7 @@ class TabbedMapView(ui.View):
         custom_id="map_tab_properties",
     )
     async def tab_properties(self, interaction: discord.Interaction, button: ui.Button):
-        await interaction.response.edit_message(
-            embed=self.embeds["properties"], view=self
-        )
+        await self.update_tab(interaction, button, "properties")
 
     @ui.button(
         label="Predeployed",
@@ -137,7 +135,16 @@ class TabbedMapView(ui.View):
         custom_id="map_tab_units",
     )
     async def tab_units(self, interaction: discord.Interaction, button: ui.Button):
-        await interaction.response.edit_message(embed=self.embeds["units"], view=self)
+        await self.update_tab(interaction, button, "units")
+
+    async def update_tab(self, interaction: discord.Interaction, button: ui.Button, tab_name: str):
+        self.set_active_button(button)
+        await interaction.response.edit_message(embed=self.embeds[tab_name], view=self)
+
+    def set_active_button(self, active_button: ui.Button):
+        for child in self.children:
+            child.style = discord.ButtonStyle.secondary
+        active_button.style = discord.ButtonStyle.primary
 
 
 class Maps(commands.Cog):

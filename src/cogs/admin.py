@@ -14,6 +14,13 @@ class Admin(commands.Cog):
             await interaction.response.send_message("You are not authorized to use this command.", ephemeral=True)
         return is_owner
 
+    @app_commands.command(name="sync", description="Sync slash commands")
+    async def sync_tree(self, interaction: discord.Interaction):
+        """Syncs the slash command tree."""
+        await interaction.response.defer(ephemeral=True)
+        await self.bot.tree.sync()
+        await interaction.followup.send("Slash commands synced.")
+
     @app_commands.command(name="reload", description="Reload all cogs")
     async def reload_all(self, interaction: discord.Interaction):
         """Reloads all loaded cogs."""

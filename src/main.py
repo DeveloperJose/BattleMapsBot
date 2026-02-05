@@ -40,12 +40,13 @@ class BattleMapsBot(commands.Bot):
         # Syncing is now handled manually by the admin cog or on first run if needed
         # But for development it's often good to sync on startup. 
         # CAUTION: Global sync can be slow and rate-limited.
-        # For now we will keep it for simplicity.
-        await self.tree.sync()
-        print("Commands synced")
+        # We are disabling it to improve startup time. Use /reload or /sync to sync commands.
+        # await self.tree.sync()
+        # print("Commands synced")
 
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
+
 
 bot = BattleMapsBot()
 
@@ -54,4 +55,21 @@ if __name__ == "__main__":
         print("Error: DISCORD_TOKEN not found in .env")
         print("Please create a .env file with DISCORD_TOKEN=your_token_here")
     else:
-        bot.run(DISCORD_TOKEN)
+        print("Starting bot...")
+        try:
+            bot.run(DISCORD_TOKEN)
+        except discord.errors.PrivilegedIntentsRequired:
+            print("\n" + "="*60)
+            print("CRITICAL ERROR: Privileged Intents are not enabled.")
+            print("="*60)
+            print("1. Go to the Discord Developer Portal: https://discord.com/developers/applications/")
+            print("2. Select your application -> Bot")
+            print("3. Scroll down to 'Privileged Gateway Intents'")
+            print("4. Enable 'MESSAGE CONTENT INTENT'")
+            print("5. Save Changes")
+            print("="*60 + "\n")
+            sys.exit(1)
+        except Exception as e:
+            print(f"Error starting bot: {e}")
+            sys.exit(1)
+

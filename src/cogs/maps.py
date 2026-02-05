@@ -6,7 +6,7 @@ from src.utils.awmap import AWMap, AWMinimap
 import traceback
 
 # Regex to find AWBW map links
-RE_AWL = re.compile(r"(http[s]?://)?awbw.amarriner.com/(glenstorm/|2030/)?prevmaps.php\?maps_id=(?P<id>[0-9]+)(?i)")
+RE_AWL = re.compile(r"(?i)(http[s]?://)?(www\.)?awbw.amarriner.com/(glenstorm/|2030/)?prevmaps.php\?maps_id=(?P<id>[0-9]+)")
 
 class Maps(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -64,6 +64,7 @@ class Maps(commands.Cog):
         # Check for map links
         match = RE_AWL.search(message.content)
         if match:
+            # print(f"Found map link: {match.group(0)}")
             map_id = int(match.group("id"))
             # Trigger typing to indicate processing
             async with message.channel.typing():
@@ -72,6 +73,8 @@ class Maps(commands.Cog):
                 if result:
                     embed, file = result
                     await message.reply(embed=embed, file=file, mention_author=False)
+                # else:
+                #     print(f"Failed to generate preview for map {map_id}")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Maps(bot))

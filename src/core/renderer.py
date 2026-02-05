@@ -26,7 +26,6 @@ class NumpyRenderer:
             if uid in self.animated_ids:
                 return True
 
-        # Check terrain for animated HQs
         for tid in unique_terr:
             if tid in self.animated_ids:
                 return True
@@ -34,24 +33,27 @@ class NumpyRenderer:
         return False
 
     def _render_frame(
-        self, terrain_ids: np.ndarray, unit_grid: np.ndarray, frame: int
+        self,
+        terrain_ids: np.ndarray,
+        unit_grid: np.ndarray,
+        frame: int,
+        is_static: bool = False,
     ) -> np.ndarray:
         """Render a single frame of the map."""
-        # Look up terrain sprites for this frame
-        terrain_sprites = self.atlas[terrain_ids, frame]  # (H, W, 4, 4, 4)
+        terrain_sprites = self.atlas[terrain_ids, frame]
 
-        # Look up unit sprites for this frame
-        unit_sprites = self.atlas[unit_grid, frame]  # (H, W, 4, 4, 4)
+        unit_sprites = self.atlas[unit_grid, frame]
 
-        # Composite (Alpha Blending)
-        unit_mask = unit_sprites[..., 3] > 0  # (H, W, 4, 4) boolean
+        if not is_static:
+            units_on_frame = 1 < frame < 6
+            if not units_on_frame:
+                unit_sprites = np.zeros_like(unit_sprites)
+
+        unit_mask = unit_sprites[..., 3] > 0
         unit_mask_4 = np.repeat(unit_mask[..., np.newaxis], 4, axis=-1)
 
-        final_grid = np.where(
-            unit_mask_4, unit_sprites, terrain_sprites
-        )  # (H, W, 4, 4, 4)
+        final_grid = np.where(unit_mask_4, unit_sprites, terrain_sprites)
 
-        # Transpose and reshape to (H*4, W*4, 4)
         height, width = terrain_ids.shape
         final_image_arr = final_grid.transpose(0, 2, 1, 3, 4).reshape(
             height * 4, width * 4, 4
@@ -68,19 +70,16 @@ class NumpyRenderer:
         height = map_data["size_h"]
         terrain_ids = np.array(map_data["terr"], dtype=np.int32)
 
-        # Build lookup table for Terrain: AWBW_ID -> (Internal_Terr_ID, Country_ID)
         max_awbw_id = max(AWBW_TERR.keys()) + 1
         terr_lookup = np.zeros(max_awbw_id, dtype=np.int32)
 
         for awbw_id, (terr, ctry) in AWBW_TERR.items():
             terr_lookup[awbw_id] = terr + (ctry * 10)
 
-        # Apply lookup
         base_sprite_ids = np.zeros_like(terrain_ids)
         valid_mask = terrain_ids < max_awbw_id
         base_sprite_ids[valid_mask] = terr_lookup[terrain_ids[valid_mask]]
 
-        # --- Units ---
         unit_grid = np.zeros((height, width), dtype=np.int32)
 
         from src.utils.data.element_id import AWBW_COUNTRY_CODE
@@ -98,17 +97,16 @@ class NumpyRenderer:
             if 0 <= y < height and 0 <= x < width:
                 unit_grid[y, x] = sprite_id
 
-        # Check if we need animation
         is_animated = self._has_animated_content(base_sprite_ids, unit_grid)
 
         if is_animated:
-            # Render 8 frames
             frames = []
             for f in range(8):
-                frame_arr = self._render_frame(base_sprite_ids, unit_grid, f)
+                frame_arr = self._render_frame(
+                    base_sprite_ids, unit_grid, f, is_static=False
+                )
                 img = Image.fromarray(frame_arr, mode="RGBA")
 
-                # Resize if needed
                 total_pixels = width * height
                 if total_pixels <= 1600:
                     img = img.resize(
@@ -121,7 +119,6 @@ class NumpyRenderer:
 
                 frames.append(img)
 
-            # Compile GIF
             out = io.BytesIO()
             frames[0].save(
                 out,
@@ -136,8 +133,9 @@ class NumpyRenderer:
             out.seek(0)
             return True, out
         else:
-            # Static render - use frame 0
-            final_image_arr = self._render_frame(base_sprite_ids, unit_grid, 0)
+            final_image_arr = self._render_frame(
+                base_sprite_ids, unit_grid, 0, is_static=True
+            )
             img = Image.fromarray(final_image_arr, mode="RGBA")
 
             total_pixels = width * height

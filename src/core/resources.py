@@ -39,8 +39,9 @@ class SpriteCache:
         for ids in UNIT_ID_TO_SPEC.values():
             self.animated_ids.update(ids)
 
-        # Shape: (MaxID + 1, 8, 4, 4, 4)  (Frame, RGBA)
-        # Using uint16 for ID indexing, so max_id < 65536
+        # Build the atlas
+        # Process in priority order: ANIM > STATIC > UNIT
+        # This ensures HQs (which share IDs with units) get the right sprite
         atlas = np.zeros((max_id + 1, 8, 4, 4, 4), dtype=np.uint8)
 
         # Helper to parse grid string
@@ -58,51 +59,48 @@ class SpriteCache:
                 grid.append([0, 0, 0, 0])
             return grid
 
-        # Combine all dicts
-        full_spec = {}
-        for d in all_specs:
-            full_spec.update(d)
+        # Process each spec in priority order
+        # ANIM_ID_TO_SPEC (HQs) first - highest priority
+        # STATIC_ID_TO_SPEC second
+        # UNIT_ID_TO_SPEC last - won't overwrite HQs
+        priority_specs = [
+            (ANIM_ID_TO_SPEC, "ANIM"),
+            (STATIC_ID_TO_SPEC, "STATIC"),
+            (UNIT_ID_TO_SPEC, "UNIT"),
+        ]
 
-        for name, ids in full_spec.items():
-            if name not in SPRITES:
-                continue
+        claimed_ids = set()
 
-            layers = SPRITES[name]
-            # Start with transparent 8x4x4x4
-            sprite_anim = np.zeros((8, 4, 4, 4), dtype=np.uint8)
-
-            for color_name, grid_str in layers:
-                if color_name not in PALETTE:
+        for spec_dict, spec_name in priority_specs:
+            for name, ids in spec_dict.items():
+                if name not in SPRITES:
                     continue
 
-                pal_val = PALETTE[color_name]
-                grid = np.array(parse_grid(grid_str))  # (4,4) 0s and 1s
-                mask = grid == 1
+                layers = SPRITES[name]
+                sprite_anim = np.zeros((8, 4, 4, 4), dtype=np.uint8)
 
-                # Check if palette is static (tuple) or animated (list)
-                if isinstance(pal_val, list):
-                    # Animated color
-                    colors = pal_val
-                    # Ensure we have 8 frames, wrap or cycle if needed, but BLINK is exactly 8
-                    if len(colors) != 8:
-                        # Fallback: extend or truncate
-                        # For now assume 8
-                        pass
-                else:
-                    # Static color: repeat 8 times
-                    colors = [pal_val] * 8
+                for color_name, grid_str in layers:
+                    if color_name not in PALETTE:
+                        continue
 
-                for f in range(8):
-                    rgb = colors[f]
-                    # Write RGB
-                    sprite_anim[f, mask, :3] = rgb
-                    # Write Alpha (255)
-                    sprite_anim[f, mask, 3] = 255
+                    pal_val = PALETTE[color_name]
+                    grid = np.array(parse_grid(grid_str))
+                    mask = grid == 1
 
-            # Assign to all IDs for this sprite
-            for i in ids:
-                if i <= max_id:
-                    atlas[i] = sprite_anim
+                    if isinstance(pal_val, list):
+                        colors = pal_val
+                    else:
+                        colors = [pal_val] * 8
+
+                    for f in range(8):
+                        rgb = colors[f]
+                        sprite_anim[f, mask, :3] = rgb
+                        sprite_anim[f, mask, 3] = 255
+
+                for i in ids:
+                    if i <= max_id and i not in claimed_ids:
+                        atlas[i] = sprite_anim
+                        claimed_ids.add(i)
 
         logger.info(f"Atlas built. Size: {atlas.nbytes / 1024:.2f} KB")
         return atlas

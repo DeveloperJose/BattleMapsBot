@@ -5,7 +5,6 @@ import re
 import traceback
 import logging
 from urllib.parse import quote
-from texttable import Texttable
 
 from src.core.repository import MapRepository
 from src.core.renderer import NumpyRenderer
@@ -106,7 +105,7 @@ class Maps(commands.Cog):
         active_players = len([i for i in active_ctries if i != 0])
 
         header_desc = (
-            f"{author_line} ・ Players: {active_players} ・ Size: {size_w}x{size_h} ・ Published: {published}\n\n"
+            f"{author_line} ・ **Players:** {active_players} ・ **Size:** {size_w}x{size_h} ・ **Published:** {published}\n\n"
             f"{preview_links}"
         )
 
@@ -129,7 +128,6 @@ class Maps(commands.Cog):
                 description=f"{header_desc}\n\nNo units found on this map.",
             )
         else:
-            total_income_all = sum(income.values())
             total_props_all = sum(sum(c.values()) for c in prop_counts.values())
 
             hq_count = sum(p.get(101, 0) for p in prop_counts.values())
@@ -153,7 +151,7 @@ class Maps(commands.Cog):
 
             stats_desc = (
                 f"{header_desc}\n\n"
-                f"**Total**: {total_props_all} props | **{format_k(total_income_all * 1000)}**/day\n"
+                f"**Total:** {total_props_all} props | **{format_k(total_income_all * 1000)}**/day\n"
                 f"**{format_k(funds_per_player * 1000)}**/player | **{format_k(funds_per_base * 1000)}**/base"
             )
 
@@ -181,27 +179,28 @@ class Maps(commands.Cog):
                 lab = props.get(107, 0)
                 inc = format_k(income.get(ctry_id, 0))
 
-                lab = props.get(107, 0)
-                inc = format_k(income.get(ctry_id, 0))
+                # Build dot-separated property list
+                prop_parts = []
+                if hq > 0:
+                    prop_parts.append(f"**HQ:** {hq}")
+                if lab > 0:
+                    prop_parts.append(f"**Lab:** {lab}")
+                if tower > 0:
+                    prop_parts.append(f"**Tower:** {tower}")
+                if city > 0:
+                    prop_parts.append(f"**City:** {city}")
+                if base > 0:
+                    prop_parts.append(f"**Base:** {base}")
+                if air > 0:
+                    prop_parts.append(f"**Airport:** {air}")
+                if port > 0:
+                    prop_parts.append(f"**Port:** {port}")
 
-                table = Texttable(max_width=70)
-                table.set_deco(
-                    Texttable.BORDER
-                    | Texttable.HEADER
-                    | Texttable.HLINES
-                    | Texttable.VLINES
-                )
-                table.set_cols_align(["l", "r", "r", "r", "r", "r", "r"])
-                table.add_rows(
-                    [
-                        ["HQ", "Lab", "Tower", "City", "Base", "Airport", "Port"],
-                        [hq, lab, tower, city, base, air, port],
-                    ]
-                )
+                prop_text = " ・ ".join(prop_parts) if prop_parts else "No properties"
 
                 prop_embed.add_field(
                     name=f"{name} ({inc}/day)",
-                    value=f"```{table.draw()}```",
+                    value=prop_text,
                     inline=False,
                 )
 
@@ -213,12 +212,13 @@ class Maps(commands.Cog):
                 if not units:
                     unit_embed.add_field(name=name, value="—", inline=False)
                 else:
-                    parts = [
-                        f"{UNIT_NAMES.get(uid, f'Unit{uid}')}: {count}"
+                    # Build dot-separated unit list
+                    unit_parts = [
+                        f"**{UNIT_NAMES.get(uid, f'Unit{uid}')}:** {count}"
                         for uid, count in sorted(units.items())
                     ]
                     unit_embed.add_field(
-                        name=name, value="\n".join(parts), inline=False
+                        name=name, value=" ・ ".join(unit_parts), inline=False
                     )
 
         return {"preview": preview_embed, "properties": prop_embed, "units": unit_embed}

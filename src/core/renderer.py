@@ -62,7 +62,8 @@ class NumpyRenderer:
     def render_map(self, map_data: Dict[str, Any]) -> Tuple[bool, io.BytesIO]:
         width = map_data["size_w"]
         height = map_data["size_h"]
-        terrain_ids = np.array(map_data["terr"], dtype=np.int32)
+        # Transpose to match (H, W) for rendering
+        terrain_ids = np.array(map_data["terr"], dtype=np.int32).T
 
         max_awbw_id = max(AWBW_TERR.keys()) + 1
         terr_lookup = np.zeros(max_awbw_id, dtype=np.int32)

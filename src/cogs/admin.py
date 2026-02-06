@@ -2,6 +2,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import traceback
+import os
+import sys
+import platform
+from datetime import datetime, timedelta
 from src.core.repository import MapRepository
 
 
@@ -9,6 +13,7 @@ class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.repo = MapRepository()
+        self.start_time = datetime.now()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         is_owner = await self.bot.is_owner(interaction.user)
@@ -70,18 +75,94 @@ class Admin(commands.Cog):
             await interaction.followup.send(f"Failed to refresh map {awbw_id}: {e}")
 
     @app_commands.command(
-        name="map_purge_cache", description="Purge ALL map caches (DB and Files)"
+        name="map_purge_cache", description="Purge ALL map caches (DB only)"
     )
     async def map_purge_cache(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
         try:
             self.repo.clear_cache(None)
-            await interaction.followup.send(
-                "All map caches purged (Database and Files)."
-            )
+            await interaction.followup.send("All map caches purged (Database).")
         except Exception as e:
             await interaction.followup.send(f"Failed to purge cache: {e}")
+
+    @app_commands.command(name="stats", description="Show comprehensive bot statistics")
+    async def stats(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+
+        try:
+            # Bot stats
+            uptime = datetime.now() - self.start_time
+            uptime_str = str(timedelta(seconds=int(uptime.total_seconds())))
+
+            # Guild/Server info
+            guilds = self.bot.guilds
+            total_guilds = len(guilds)
+            total_members = sum(g.member_count or 0 for g in guilds)
+            total_channels = sum(len(g.channels) for g in guilds)
+
+            # Build guild list (limit to 20 to avoid message too long)
+            guild_list = []
+            for guild in sorted(guilds, key=lambda g: g.member_count or 0, reverse=True)[:20]:
+                guild_list.append(
+                    f"• {guild.name} ({guild.id}) - {guild.member_count} members"
+                )
+
+            guilds_text = "\n".join(guild_list)
+            if len(guilds) > 20:
+                guilds_text += f"\n... and {len(guilds) - 20} more servers"
+
+            # Cache stats
+            cache_stats = self.repo.get_cache_stats()
+
+            # System info
+            python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            discord_version = discord.__version__
+
+            # Memory usage (rough estimate)
+            try:
+                import psutil
+                process = psutil.Process(os.getpid())
+                memory_mb = process.memory_info().rss / (1024 * 1024)
+                memory_str = f"{memory_mb:.1f} MB"
+            except ImportError:
+                memory_str = "N/A (psutil not installed)"
+
+            msg = (
+                f"**🤖 Bot Statistics**\n"
+                f"```\n"
+                f"Uptime:           {uptime_str}\n"
+                f"Python:           {python_version}\n"
+                f"Discord.py:       {discord_version}\n"
+                f"Platform:         {platform.system()} {platform.release()}\n"
+                f"Memory Usage:     {memory_str}\n"
+                f"```\n"
+                f"**📊 Server Info**\n"
+                f"```\n"
+                f"Total Servers:    {total_guilds}\n"
+                f"Total Members:    {total_members}\n"
+                f"Total Channels:   {total_channels}\n"
+                f"```\n"
+                f"**🗄️ Cache Statistics**\n"
+                f"```\n"
+                f"Database Size:    {cache_stats['db_size_mb']:.2f} MB / {cache_stats['size_limit_mb']} MB\n"
+                f"Cached Maps:      {cache_stats['entry_count']}\n"
+                f"Cache TTL:        {cache_stats['ttl_hours']} hours\n"
+                f"```"
+            )
+
+            # Send guild list separately if it's long
+            if len(msg) + len(guilds_text) < 1900:
+                msg += f"\n**🏠 Servers ({total_guilds} total):**\n```\n{guilds_text}\n```"
+                await interaction.followup.send(msg)
+            else:
+                await interaction.followup.send(msg)
+                await interaction.followup.send(
+                    f"**🏠 Servers ({total_guilds} total):**\n```\n{guilds_text}\n```"
+                )
+
+        except Exception as e:
+            await interaction.followup.send(f"Failed to get stats: {e}")
 
 
 async def setup(bot: commands.Bot):

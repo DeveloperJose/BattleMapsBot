@@ -11,12 +11,13 @@ from pathlib import Path
 from PIL import Image
 from typing import Dict, Optional
 import logging
+from src.config import config
 
 logger = logging.getLogger(__name__)
 
-TILE_SIZE = 16
-SPRITE_DIR = Path("/home/devj/local-arch/code/awbw/public_html/terrain/aw2")
-ATLAS_PATH = Path("cache/aw2_atlas.npz")
+TILE_SIZE = config.renderer["tile_size"]
+SPRITE_DIR = Path(config.renderer["sprite_dir"])
+ATLAS_PATH = Path(config.renderer["atlas_path"])
 
 # Regex to filter files:
 # - Must end with .gif

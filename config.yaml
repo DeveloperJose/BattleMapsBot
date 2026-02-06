@@ -1,0 +1,45 @@
+api:
+  # Base URL for the Advance Wars By Web API
+  map_url: "https://awbw.amarriner.com/api/map/map_info.php"
+  
+  # Rate limiting to prevent IP bans
+  rate_limit:
+    # Number of calls allowed per period
+    calls: 2
+    # Period in seconds
+    period: 1.0
+
+cache:
+  # Path to the SQLite database file for caching map data
+  db_path: "cache/maps.db"
+  
+  # Time To Live for cache entries in hours
+  ttl_hours: 1
+  
+  # Maximum size of the cache database in Megabytes
+  # When exceeded, oldest entries are pruned
+  max_size_mb: 250
+
+renderer:
+  # Size of a single map tile in pixels (AW2 standard is 16x16)
+  tile_size: 16
+  
+  # Extra vertical space (in pixels) added to the top of the map image.
+  # This accommodates tall sprites like HQs, Cities, or Mountains that
+  # extend visually above their logical tile boundary.
+  # Without this, the tops of properties on the first row would be cut off.
+  max_prop_extension: 16
+  
+  # Directory containing the raw .gif sprite files extracted from AWBW
+  sprite_dir: "/home/devj/local-arch/code/awbw/public_html/terrain/aw2"
+  
+  # Path to the pre-compiled numpy sprite atlas
+  atlas_path: "cache/aw2_atlas.npz"
+  
+  # RGBA color used when a sprite is missing [R, G, B, A] (Magenta)
+  fallback_color: [255, 0, 255, 255]
+  
+  # The fixed width in pixels for the generated map image.
+  # All maps will be resized (nearest-neighbor) to this width.
+  # Height is adjusted automatically to maintain aspect ratio.
+  image_size: 1024

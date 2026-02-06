@@ -4,6 +4,7 @@ import time
 from typing import Optional, Dict, Any
 from aiolimiter import AsyncLimiter
 from src.core.stats import BotStats
+from src.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -14,11 +15,12 @@ class AWBWClient:
     Handles rate limiting and session management.
     """
 
-    MAPS_API = "https://awbw.amarriner.com/api/map/map_info.php"
+    MAPS_API = config.api["map_url"]
 
     def __init__(self):
         self._session: Optional[aiohttp.ClientSession] = None
-        self._limiter = AsyncLimiter(2, 1.0)
+        rate_limit = config.api["rate_limit"]
+        self._limiter = AsyncLimiter(rate_limit["calls"], rate_limit["period"])
 
     async def get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:

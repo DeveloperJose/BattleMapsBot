@@ -6,16 +6,17 @@ import logging
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from src.core.awbw import AWBWClient
+from src.config import config
 
 logger = logging.getLogger(__name__)
 
-CACHE_TTL_HOURS = 24
-MAX_CACHE_SIZE_MB = 250
+CACHE_TTL_HOURS = config.cache["ttl_hours"]
+MAX_CACHE_SIZE_MB = config.cache["max_size_mb"]
 
 
 class MapRepository:
-    def __init__(self, db_path: str = "cache/maps.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: Optional[str] = None):
+        self.db_path = db_path or config.cache["db_path"]
         self._ensure_dirs()
         self._init_db()
         self.client = AWBWClient()
@@ -131,6 +132,7 @@ class MapRepository:
                 "x": int(unit.get("Unit X", 0)),
                 "y": int(unit.get("Unit Y", 0)),
                 "ctry": unit.get("Country Code", ""),
+                "hp": int(unit.get("Unit HP", 10)),
             }
             units.append(unit_dict)
 

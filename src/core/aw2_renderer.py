@@ -19,10 +19,13 @@ from src.core.aw2_data import (
 )
 from src.core.stats import BotStats
 from src.utils.data.element_id import AWBW_COUNTRY_CODE, AWBW_UNIT_CODE
+from src.config import config
 
 logger = logging.getLogger(__name__)
 
-TILE_SIZE = 16
+TILE_SIZE = config.renderer["tile_size"]
+MAX_PROP_EXTENSION = config.renderer["max_prop_extension"]
+
 
 class AW2Renderer:
     """Renderer using actual AW2 game sprites."""
@@ -198,7 +201,7 @@ class AW2Renderer:
     def _create_fallback_sprite(self) -> np.ndarray:
         """Create a magenta fallback sprite for missing terrain."""
         sprite = np.zeros((TILE_SIZE, TILE_SIZE, 4), dtype=np.uint8)
-        sprite[:, :] = [255, 0, 255, 255]  # Magenta
+        sprite[:, :] = config.renderer["fallback_color"]
         return sprite
 
     def _get_sprite_for_terrain(self, terrain_id: int) -> np.ndarray:
@@ -277,20 +280,15 @@ class AW2Renderer:
             # Render map image (terrain + units)
             img = self._render(terrain_ids, map_data.get("unit", []), width, height)
 
-            # Scale down very large maps to fit Discord's limits
-            total_pixels = width * height
+            # Resize to fixed width as per config
+            target_w = config.renderer.get("image_size", 1000)
             img_w, img_h = img.size
 
-            if total_pixels > 3200:
-                # Large maps: scale to 50%
-                new_w = img_w // 2
-                new_h = img_h // 2
-                img = img.resize((new_w, new_h), resample=Image.Resampling.NEAREST)
-            elif total_pixels > 1600:
-                # Medium maps: scale to 75%
-                new_w = (img_w * 3) // 4
-                new_h = (img_h * 3) // 4
-                img = img.resize((new_w, new_h), resample=Image.Resampling.NEAREST)
+            if img_w != target_w and img_w > 0:
+                scale = target_w / img_w
+                new_h = int(img_h * scale)
+                # Use NEAREST for pixel art style
+                img = img.resize((target_w, new_h), resample=Image.Resampling.NEAREST)
 
             # Save to buffer
             out = io.BytesIO()
@@ -313,9 +311,6 @@ class AW2Renderer:
         Any sprite with transparency (forests, mountains, properties, etc.)
         gets a plains tile underneath first, then the sprite is alpha-composited on top.
         """
-        # Properties can extend upward (max ~32px for HQ sprites)
-        MAX_PROP_EXTENSION = 16
-
         # Create output canvas as PIL Image for proper alpha compositing
         canvas_width = width * TILE_SIZE
         canvas_height = height * TILE_SIZE + MAX_PROP_EXTENSION
@@ -376,11 +371,12 @@ class AW2Renderer:
                 continue
 
             unit_id = unit.get("id")
-            ctry_str = unit.get("ctry")
+            ctry_str = str(unit.get("ctry", ""))
             ctry_id = AWBW_COUNTRY_CODE.get(ctry_str, 0)
             
             # Map AWBW Unit ID to Internal Unit ID
-            internal_unit_id = AWBW_UNIT_CODE.get(unit_id, 0)
+            unit_id_val = int(unit.get("id", 0))
+            internal_unit_id = AWBW_UNIT_CODE.get(unit_id_val, 0)
 
             unit_sprite_arr = self._get_sprite_for_unit(internal_unit_id, ctry_id)
             if unit_sprite_arr is not None:
@@ -403,5 +399,21 @@ class AW2Renderer:
 
                 r, g, b, alpha = unit_sprite.split()
                 output.paste(unit_sprite, (px, paste_y), mask=alpha)
+
+                # 3. Render HP if < 10
+                hp = int(unit.get("hp", 10))
+                if 1 <= hp <= 9:
+                    # HP sprites are named "1", "2", ... in the atlas
+                    hp_sprite_arr = self.atlas.get(str(hp))
+                    if hp_sprite_arr is not None:
+                        hp_sprite = Image.fromarray(hp_sprite_arr, mode="RGBA")
+                        
+                        # Position HP in the bottom-right of the tile
+                        hp_w, hp_h = hp_sprite.size
+                        hp_x = px + TILE_SIZE - hp_w
+                        hp_y = py + TILE_SIZE - hp_h
+                        
+                        r_hp, g_hp, b_hp, alpha_hp = hp_sprite.split()
+                        output.paste(hp_sprite, (hp_x, hp_y), mask=alpha_hp)
 
         return output

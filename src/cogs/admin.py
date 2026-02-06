@@ -11,6 +11,8 @@ from src.core.stats import BotStats
 from src.core.aw2_atlas import SpriteAtlas
 
 
+from src.config import config
+
 class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -38,6 +40,14 @@ class Admin(commands.Cog):
     async def reload_all(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
+        # Reload configuration
+        try:
+            config.reload()
+            config_msg = "Config reloaded."
+        except Exception as e:
+            config_msg = f"Config reload failed: {e}"
+            traceback.print_exc()
+
         reloaded = []
         failed = []
 
@@ -51,7 +61,7 @@ class Admin(commands.Cog):
                 failed.append(f"{ext}: {e}")
                 traceback.print_exc()
 
-        msg = f"**Reloaded ({len(reloaded)}):**\n" + "\n".join(reloaded)
+        msg = f"{config_msg}\n\n**Reloaded ({len(reloaded)}):**\n" + "\n".join(reloaded)
         if failed:
             msg += f"\n\n**Failed ({len(failed)}):**\n" + "\n".join(failed)
 

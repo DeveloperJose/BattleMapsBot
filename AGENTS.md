@@ -22,8 +22,8 @@ uv sync
 uv run src/main.py
 ```
 
-### Linting, Formatting & Types
-The project uses `ruff` for linting/formatting and `pyright` for static type checking.
+### Linting & Formatting
+The project uses `ruff` for linting/formatting.
 
 ```bash
 # Check for linting errors
@@ -34,10 +34,6 @@ uv run ruff check --fix .
 
 # Format code
 uv run ruff format .
-
-# Run static type checking (Pyright)
-# Note: Pyright is configured via pyrightconfig.json
-uv run pyright .
 ```
 
 ### Testing
@@ -62,7 +58,6 @@ Follow this order:
 
 ### Types & Annotations
 - Use Python type hints extensively.
-- Run `uv run pyright` to verify types.
 - Common imports: `from typing import Optional, Dict, Any, List`
 
 ### Async/Await
@@ -101,4 +96,4 @@ Follow this order:
 2.  **Read:** Read existing code to understand patterns.
 3.  **Plan:** Create a plan before editing.
 4.  **Edit:** Apply changes.
-5.  **Verify:** Run linting (`ruff`) and type checking (`pyright`). Manually verify functionality if possible.
+5.  **Verify:** Run linting (`ruff`). Manually verify functionality if possible.

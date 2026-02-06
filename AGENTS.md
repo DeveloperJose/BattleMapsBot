@@ -14,11 +14,11 @@ The bot uses a high-performance architecture for map rendering:
 - **Core (`src/core/`):**
     - `awbw.py`: API Client with `aiolimiter` for rate limiting (max 2 req/s).
     - `repository.py`: Offline-first data layer using SQLite (`data/maps.db`) and Filesystem Cache (`cache/maps/`).
-    - `renderer.py`: **Numpy-based** vectorized renderer. Generates maps instantly using a pre-compiled Sprite Atlas.
-    - `resources.py`: Manages the Sprite Atlas (compiled from `data.py`).
-    - `data.py`: Contains sprite definitions and ID mappings (migrated from `bitmap.py`).
+    - `aw2_renderer.py`: **Numpy-based** renderer using actual AW2 game sprites.
+    - `aw2_atlas.py`: Manages the Sprite Atlas (builds/loads from `cache/aw2_atlas.npz`).
+    - `aw2_data.py`: Contains terrain/unit to sprite name mappings.
 - **Commands (`src/cogs/`):**
-    - `maps.py`: Handles `/map` command using `MapRepository` and `NumpyRenderer`.
+    - `maps.py`: Handles `/map` command using `MapRepository` and `AW2Renderer`.
     - `admin.py`: Handles admin commands (`/sync`, `/reload`, `/map_refresh`, `/map_purge_cache`).
 
 **Key Constraints:**

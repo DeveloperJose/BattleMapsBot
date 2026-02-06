@@ -8,7 +8,7 @@ class BattleMapsBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
         intents.message_content = True
-        super().__init__(command_prefix=lambda _b, _m: [], intents=intents)
+        super().__init__(command_prefix=lambda *_: [], intents=intents)
 
     async def setup_hook(self):
         extensions = ["src.cogs.maps", "src.cogs.admin"]
@@ -19,13 +19,6 @@ class BattleMapsBot(commands.Bot):
                 print(f"Loaded extension: {ext}")
             except Exception as e:
                 print(f"Failed to load extension {ext}: {e}")
-
-        # await self.tree.sync()
-        # print("Global slash commands synced.")
-        #
-        # TEST_GUILD_ID = 1183697275491455068
-        # await self.tree.sync(guild=discord.Object(TEST_GUILD_ID))
-        # print("Guild-specific slash commands synced.")
 
     async def on_ready(self):
         print(f"Logged in as {self.user} (ID: {self.user.id})")

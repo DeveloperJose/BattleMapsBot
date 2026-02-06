@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 TILE_SIZE = 16
 
-
 class AW2Renderer:
     """Renderer using actual AW2 game sprites."""
 

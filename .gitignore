@@ -1,9 +1,8 @@
 .env
 *__pycache__*
+.serena
 
 cache/
-data/
-test_output/
 
 # UV artifacts
 /.venv/

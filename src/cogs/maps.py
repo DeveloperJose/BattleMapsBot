@@ -8,6 +8,7 @@ from urllib.parse import quote
 
 from src.core.repository import MapRepository
 from src.core.renderer import NumpyRenderer
+from src.core.aw2_renderer import AW2Renderer
 from src.utils.awbw_data import (
     UNIT_NAMES,
     CTRY_NAMES,
@@ -28,9 +29,18 @@ class TabbedMapView(ui.View):
         self.embeds = embeds
 
     @ui.button(
+        label="Render",
+        emoji="🎨",
+        style=discord.ButtonStyle.primary,
+        custom_id="map_tab_render",
+    )
+    async def tab_render(self, interaction: discord.Interaction, button: ui.Button):
+        await self.update_tab(interaction, button, "render")
+
+    @ui.button(
         label="Preview",
         emoji="🗺️",
-        style=discord.ButtonStyle.primary,
+        style=discord.ButtonStyle.secondary,
         custom_id="map_tab_preview",
     )
     async def tab_preview(self, interaction: discord.Interaction, button: ui.Button):
@@ -71,11 +81,12 @@ class Maps(commands.Cog):
         self.bot = bot
         self.repo = MapRepository()
         self.renderer = NumpyRenderer()
+        self.aw2_renderer = AW2Renderer()
 
     async def cog_unload(self):
         await self.repo.close()
 
-    def build_embeds(self, awbw_id: int, map_data: dict, image_filename: str) -> dict:
+    def build_embeds(self, awbw_id: int, map_data: dict, preview_filename: str, render_filename: str) -> dict:
         author = map_data.get("author", "Unknown")
         author_url = f"https://awbw.amarriner.com/profile.php?username={quote(author)}"
 
@@ -109,12 +120,21 @@ class Maps(commands.Cog):
             f"{preview_links}"
         )
 
+        # Render embed (AW2 sprites) - new primary tab
+        render_embed = discord.Embed(
+            title=map_data.get("name", f"Map {awbw_id}"),
+            url=f"https://awbw.amarriner.com/prevmaps.php?maps_id={awbw_id}",
+            description=header_desc,
+        )
+        render_embed.set_image(url=f"attachment://{render_filename}")
+
+        # Preview embed (bitmap renderer)
         preview_embed = discord.Embed(
             title=map_data.get("name", f"Map {awbw_id}"),
             url=f"https://awbw.amarriner.com/prevmaps.php?maps_id={awbw_id}",
             description=header_desc,
         )
-        preview_embed.set_image(url=f"attachment://{image_filename}")
+        preview_embed.set_image(url=f"attachment://{preview_filename}")
 
         if not active_ctries:
             prop_embed = discord.Embed(
@@ -221,22 +241,33 @@ class Maps(commands.Cog):
                         name=name, value=" ・ ".join(unit_parts), inline=False
                     )
 
-        return {"preview": preview_embed, "properties": prop_embed, "units": unit_embed}
+        return {"render": render_embed, "preview": preview_embed, "properties": prop_embed, "units": unit_embed}
 
     async def generate_map_response(
         self, awbw_id: int
-    ) -> tuple[discord.Embed, discord.File, ui.View] | None:
+    ) -> tuple[discord.Embed, list[discord.File], ui.View] | None:
         try:
             map_data = await self.repo.get_map_data(awbw_id)
-            is_animated, image_bytes = self.renderer.render_map(map_data)
-            ext = "gif" if is_animated else "png"
-            filename = f"awbw_{awbw_id}.{ext}"
-            file = discord.File(image_bytes, filename=filename)
+            
+            # Generate both images
+            is_animated, preview_bytes = self.renderer.render_map(map_data)
+            _, render_bytes = self.aw2_renderer.render_map(map_data)
+            
+            # Create filenames
+            preview_ext = "gif" if is_animated else "png"
+            preview_filename = f"awbw_{awbw_id}.{preview_ext}"
+            render_filename = f"awbw_{awbw_id}_render.png"
+            
+            # Create file objects
+            preview_file = discord.File(preview_bytes, filename=preview_filename)
+            render_file = discord.File(render_bytes, filename=render_filename)
+            
+            files = [render_file, preview_file]
 
-            embeds = self.build_embeds(awbw_id, map_data, filename)
+            embeds = self.build_embeds(awbw_id, map_data, preview_filename, render_filename)
             view = TabbedMapView(awbw_id, embeds)
 
-            return embeds["preview"], file, view
+            return embeds["render"], files, view
 
         except Exception as e:
             logger.error(f"Error generating map {awbw_id}: {e}")
@@ -249,8 +280,8 @@ class Maps(commands.Cog):
         await interaction.response.defer()
         result = await self.generate_map_response(awbw_id)
         if result:
-            embed, file, view = result
-            await interaction.followup.send(embed=embed, file=file, view=view)
+            embed, files, view = result
+            await interaction.followup.send(embed=embed, files=files, view=view)
         else:
             await interaction.followup.send(
                 f"Error loading map ID {awbw_id}. Please check if the ID is valid."
@@ -266,9 +297,9 @@ class Maps(commands.Cog):
             async with message.channel.typing():
                 result = await self.generate_map_response(map_id)
                 if result:
-                    embed, file, view = result
+                    embed, files, view = result
                     await message.reply(
-                        embed=embed, file=file, view=view, mention_author=False
+                        embed=embed, files=files, view=view, mention_author=False
                     )
 
 

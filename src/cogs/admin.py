@@ -7,6 +7,8 @@ import sys
 import platform
 from datetime import datetime, timedelta
 from src.core.repository import MapRepository
+from src.core.stats import BotStats
+from src.core.aw2_atlas import SpriteAtlas
 
 
 class Admin(commands.Cog):
@@ -103,7 +105,9 @@ class Admin(commands.Cog):
 
             # Build guild list (limit to 20 to avoid message too long)
             guild_list = []
-            for guild in sorted(guilds, key=lambda g: g.member_count or 0, reverse=True)[:20]:
+            for guild in sorted(
+                guilds, key=lambda g: g.member_count or 0, reverse=True
+            )[:20]:
                 guild_list.append(
                     f"• {guild.name} ({guild.id}) - {guild.member_count} members"
                 )
@@ -115,6 +119,16 @@ class Admin(commands.Cog):
             # Cache stats
             cache_stats = self.repo.get_cache_stats()
 
+            # Atlas stats
+            atlas = SpriteAtlas()
+            atlas_size_mb = atlas.size_bytes / (1024 * 1024)
+            atlas_count = len(atlas)
+
+            # Telemetry stats
+            bot_stats = BotStats()
+            api_stats = bot_stats.get_api_stats()
+            render_stats = bot_stats.get_render_stats()
+
             # System info
             python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
             discord_version = discord.__version__
@@ -122,6 +136,7 @@ class Admin(commands.Cog):
             # Memory usage (rough estimate)
             try:
                 import psutil
+
                 process = psutil.Process(os.getpid())
                 memory_mb = process.memory_info().rss / (1024 * 1024)
                 memory_str = f"{memory_mb:.1f} MB"
@@ -143,17 +158,37 @@ class Admin(commands.Cog):
                 f"Total Members:    {total_members}\n"
                 f"Total Channels:   {total_channels}\n"
                 f"```\n"
-                f"**🗄️ Cache Statistics**\n"
+                f"**🗄️ Cache & Atlas**\n"
                 f"```\n"
-                f"Database Size:    {cache_stats['db_size_mb']:.2f} MB / {cache_stats['size_limit_mb']} MB\n"
+                f"DB Cache Size:    {cache_stats['db_size_mb']:.2f} MB / {cache_stats['size_limit_mb']} MB\n"
                 f"Cached Maps:      {cache_stats['entry_count']}\n"
                 f"Cache TTL:        {cache_stats['ttl_hours']} hours\n"
+                f"Atlas Size:       {atlas_size_mb:.2f} MB\n"
+                f"Atlas Sprites:    {atlas_count}\n"
+                f"```\n"
+                f"**🌐 API Statistics**\n"
+                f"```\n"
+                f"Total Requests:   {api_stats['total_uptime']} (Uptime)\n"
+                f"Last 24 Hours:    {api_stats['total_24h']}\n"
+                f"Last Hour:        {api_stats['total_1h']}\n"
+                f"Last Minute:      {api_stats['total_1m']}\n"
+                f"Avg Duration:     {api_stats['average'] * 1000:.1f} ms\n"
+                f"Longest Req:      {api_stats['longest'] * 1000:.1f} ms\n"
+                f"```\n"
+                f"**🎨 Render Statistics**\n"
+                f"```\n"
+                f"Total Renders:    {render_stats['count']}\n"
+                f"Total Time:       {render_stats['total_time']:.2f} s\n"
+                f"Avg Render:       {render_stats['average'] * 1000:.1f} ms\n"
+                f"Longest Render:   {render_stats['longest'] * 1000:.1f} ms\n"
                 f"```"
             )
 
             # Send guild list separately if it's long
             if len(msg) + len(guilds_text) < 1900:
-                msg += f"\n**🏠 Servers ({total_guilds} total):**\n```\n{guilds_text}\n```"
+                msg += (
+                    f"\n**🏠 Servers ({total_guilds} total):**\n```\n{guilds_text}\n```"
+                )
                 await interaction.followup.send(msg)
             else:
                 await interaction.followup.send(msg)
@@ -163,6 +198,7 @@ class Admin(commands.Cog):
 
         except Exception as e:
             await interaction.followup.send(f"Failed to get stats: {e}")
+            traceback.print_exc()
 
 
 async def setup(bot: commands.Bot):

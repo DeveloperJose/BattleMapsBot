@@ -14,7 +14,7 @@ MAX_CACHE_SIZE_MB = 250
 
 
 class MapRepository:
-    def __init__(self, db_path: str = "data/maps.db"):
+    def __init__(self, db_path: str = "cache/maps.db"):
         self.db_path = db_path
         self._ensure_dirs()
         self._init_db()

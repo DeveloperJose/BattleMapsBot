@@ -1,7 +1,9 @@
 import aiohttp
 import logging
+import time
 from typing import Optional, Dict, Any
 from aiolimiter import AsyncLimiter
+from src.core.stats import BotStats
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +36,7 @@ class AWBWClient:
         session = await self.get_session()
 
         async with self._limiter:
+            start_time = time.time()
             try:
                 logger.info(f"Fetching map {map_id} from AWBW...")
                 async with session.get(
@@ -63,3 +66,5 @@ class AWBWClient:
             except aiohttp.ClientError as e:
                 logger.error(f"Network error fetching map {map_id}: {e}")
                 raise
+            finally:
+                BotStats().record_api_request(time.time() - start_time)

@@ -99,6 +99,7 @@ class Admin(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"Failed to purge cache: {e}")
 
+    @app_commands.command(name="stats", description="Show bot statistics")
     async def stats(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 

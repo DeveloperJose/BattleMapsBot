@@ -6,8 +6,8 @@ This document provides essential instructions for AI agents working on the Battl
 BattleMapsBot is a Discord utility bot for the AWBW (Advance Wars By Web) server.
 - **Framework:** `discord.py` (v2.0+) using Application Commands (Slash Commands).
 - **Package Manager:** `uv` is used for dependency management and running commands.
-- **Python Version:** >= 3.12 (Check `pyproject.toml` or `.python-version`).
-- **Structure:** Source code is located in `src/`.
+- **Python Version:** >= 3.15 (Check `pyproject.toml`).
+- **Structure:** Source code is located in `src/`. The main entry point is `src/main.py`.
 
 ## 2. Build & Run Commands
 Always use `uv run` to execute commands within the project environment.
@@ -61,38 +61,31 @@ Follow this order:
 - Common imports: `from typing import Optional, Dict, Any, List`
 
 ### Async/Await
-- **Network I/O:** Always use `aiohttp` for HTTP requests. **Never** use blocking `requests` or `urllib`.
-- **File I/O:** For small files, standard synchronous I/O is acceptable. For larger operations, consider running in an executor:
-  ```python
-  loop = asyncio.get_running_loop()
-  await loop.run_in_executor(None, self._heavy_operation, args)
-  ```
+- **Network I/O:** Always use `aiohttp` for HTTP requests. **Never** use blocking `requests` or `urllib`. The client is in `src/core/awbw.py`.
+- **File I/O:** For small files, standard synchronous I/O is acceptable. For larger operations, consider running in an executor.
 
 ### Error Handling & Logging
 - **Logging:** Use the `logging` module. Do not use `print()`.
-  ```python
-  import logging
-  logger = logging.getLogger(__name__)
-  logger.error(f"Error doing X: {e}")
-  ```
-- **Exceptions:** Catch specific exceptions where possible. Log full tracebacks for unexpected errors using `traceback.print_exc()` or `logger.exception()`.
+- **Exceptions:** Catch specific exceptions where possible. Log full tracebacks for unexpected errors.
 - **User Feedback:** If a command fails, provide a user-friendly error message via `interaction.followup.send()`.
 
 ## 4. Architecture & Design
 - **Core (`src/core/`):** Contains business logic (API, DB, Rendering).
     - `repository.py`: Offline-first data layer (SQLite + Filesystem).
-    - `aw2_renderer.py`: **Numpy-based** renderer. Avoid `PIL` pixel loops for performance.
+    - `aw2_renderer.py`: **Numpy-based** renderer.
+    - `awbw.py`: Client for interacting with the AWBW API.
 - **Commands (`src/cogs/`):** Discord command handlers.
-    - Keep logic in `src/core` and use Cogs for interface/handling.
+    - `maps.py`: Handles the `/map` command and link detection.
+    - `admin.py`: Handles owner-only commands like `/reload`.
 - **Configuration:** Use `src.config` for accessing configuration values.
 
 ## 5. Key Constraints
 - **No External Cloud:** Use SQLite (`data/maps.db`) and local files (`cache/`).
 - **Performance:** Optimize for speed. Map rendering should be fast.
-- **Rate Limiting:** Respect AWBW rate limits (2 req/s). Use `AWBWClient` or `MapRepository`.
+- **Rate Limiting:** Respect AWBW rate limits.
 
 ## 6. Workflow for Agents
-1.  **Explore:** Use `ls -R` or `find` to locate relevant files.
+1.  **Explore:** Use `ls -R` to locate relevant files.
 2.  **Read:** Read existing code to understand patterns.
 3.  **Plan:** Create a plan before editing.
 4.  **Edit:** Apply changes.

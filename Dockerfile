@@ -2,6 +2,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Set Python to run in unbuffered mode (print statements flush immediately)
+ENV PYTHONUNBUFFERED=1
+
 # Install uv
 RUN pip install uv
 

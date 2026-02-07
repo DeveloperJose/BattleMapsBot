@@ -42,10 +42,6 @@ def benchmark():
     repo = MapRepository()  # Use cached data
     renderer = AW2Renderer()
 
-    # We need to run async get_map_data in sync context or wrap it
-    # Since we pre-fetched, repo.get_map_data should hit the DB which is running in executor.
-    # But wait, get_map_data is async def. We need an event loop or run it via asyncio.run
-
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 

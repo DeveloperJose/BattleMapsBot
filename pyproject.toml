@@ -1,13 +1,17 @@
 [project]
 name = "battlemaps"
-version = "0.0.1"
+version = "1.0.0"
 description = "A simple utility bot for the AWBW Discord server"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.15"
+authors = [
+    {name = "DeveloperJose"},
+    {name = "SirThane"},
+]
 dependencies = [
     "discord-py>=2.4.0",
     "aiohttp>=3.9.0",
-    "pillow>=11.0.0",
+    "pillow @ git+https://github.com/python-pillow/Pillow.git",
     "python-dotenv>=1.0.0",
     "numpy>=2.4.2",
     "aiolimiter>=1.2.1",
@@ -27,6 +31,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["."]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [dependency-groups]
 dev = [

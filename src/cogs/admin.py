@@ -152,13 +152,12 @@ class Admin(commands.Cog):
                 memory_str = f"{memory_mb:.1f} MB"
             except ImportError:
                 memory_str = "N/A (psutil not installed)"
-            
-            longest_render_map_id = render_stats.get('longest_map_id', 0)
+
+            longest_render_map_id = render_stats.get("longest_map_id", 0)
             if longest_render_map_id:
                 longest_render_str = f"{render_stats['longest'] * 1000:.1f} ms (Map ID: {longest_render_map_id})"
             else:
                 longest_render_str = f"{render_stats['longest'] * 1000:.1f} ms"
-
 
             msg = (
                 f"**🤖 Bot Statistics**\n"

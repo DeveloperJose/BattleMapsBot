@@ -196,7 +196,9 @@ class AW2Renderer:
         self.atlas = SpriteAtlas()
         self._fallback_sprite = self._create_fallback_sprite()
         plain_arr = self.atlas.get("plain")
-        self._plain_sprite = plain_arr if plain_arr is not None else self._fallback_sprite
+        self._plain_sprite = (
+            plain_arr if plain_arr is not None else self._fallback_sprite
+        )
 
         # Pre-cache Pillow Image objects to avoid repeated fromarray calls
         self._sprite_image_cache = {}
@@ -223,7 +225,9 @@ class AW2Renderer:
 
         sprite = self.atlas.get(sprite_name)
         if sprite is None:
-            logger.warning(f"Sprite not found: {sprite_name} for terrain ID {terrain_id}")
+            logger.warning(
+                f"Sprite not found: {sprite_name} for terrain ID {terrain_id}"
+            )
             return self._fallback_sprite, ""
 
         return sprite, sprite_name
@@ -237,7 +241,9 @@ class AW2Renderer:
         suffix = UNIT_ID_TO_SPRITE_NAME.get(unit_id)
 
         if not suffix:
-            logger.warning(f"No sprite suffix found for unit ID {unit_id} (Country: {country_id})")
+            logger.warning(
+                f"No sprite suffix found for unit ID {unit_id} (Country: {country_id})"
+            )
             return None
 
         return f"{prefix}{suffix}"
@@ -287,7 +293,7 @@ class AW2Renderer:
                 img = img.resize((target_w, new_h), resample=Image.Resampling.NEAREST)
 
             out = io.BytesIO()
-            img.save(out, format="PNG", compress_level=1)
+            img.save(out, format="WEBP", lossless=True)
             out.seek(0)
 
             return False, out
@@ -313,7 +319,7 @@ class AW2Renderer:
         for i, tid in enumerate(unique_ids):
             sprite_arr, sprite_name = self._get_sprite_for_terrain(tid)
             h, w, c = sprite_arr.shape
-            
+
             # Ensure sprite is RGBA for LUT
             final_sprite_arr = sprite_arr
             if c == 3:
@@ -323,8 +329,15 @@ class AW2Renderer:
             if h == TILE_SIZE and w == TILE_SIZE:
                 if np.any(final_sprite_arr[:, :, 3] < 255):
                     alpha = (final_sprite_arr[:, :, 3] / 255.0)[:, :, np.newaxis]
-                    comp_rgb = final_sprite_arr[:, :, :3] * alpha + plain_arr[:, :, :3] * (1.0 - alpha)
-                    lut[i] = np.dstack([comp_rgb.astype(np.uint8), np.full((h, w), 255, dtype=np.uint8)])
+                    comp_rgb = final_sprite_arr[:, :, :3] * alpha + plain_arr[
+                        :, :, :3
+                    ] * (1.0 - alpha)
+                    lut[i] = np.dstack(
+                        [
+                            comp_rgb.astype(np.uint8),
+                            np.full((h, w), 255, dtype=np.uint8),
+                        ]
+                    )
                 else:
                     lut[i] = final_sprite_arr
             else:
@@ -344,12 +357,12 @@ class AW2Renderer:
         mapper = np.zeros(max_id + 1, dtype=int)
         mapper[unique_ids] = np.arange(len(unique_ids))
         indices = mapper[terrain_ids]
-        
+
         grid = lut[indices]
         base_layer_arr = grid.transpose(0, 2, 1, 3, 4).reshape(
             height * TILE_SIZE, width * TILE_SIZE, 4
         )
-        
+
         canvas_width = width * TILE_SIZE
         canvas_height = height * TILE_SIZE + MAX_PROP_EXTENSION
         output = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))

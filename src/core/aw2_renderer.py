@@ -306,113 +306,122 @@ class AW2Renderer:
         width: int,
         height: int,
     ) -> Image.Image:
-        """Render map to PIL Image with universal alpha compositing.
+        """Render map using vectorized numpy operations for the base layer."""
 
-        Any sprite with transparency (forests, mountains, properties, etc.)
-        gets a plains tile underneath first, then the sprite is alpha-composited on top.
-        """
-        # Create output canvas as PIL Image for proper alpha compositing
+        # 1. Analyze sprites and build a Look-Up Table (LUT)
+        unique_ids = np.unique(terrain_ids)
+        
+        # LUT stores the final 16x16 tile sprite for each unique terrain ID
+        lut = np.zeros((len(unique_ids), TILE_SIZE, TILE_SIZE, 4), dtype=np.uint8)
+        
+        # Caches for complex sprites (non-16x16) and their final PIL images
+        complex_sprite_cache = {}
+        
+        # Ensure plain sprite is RGBA for compositing
+        plain_arr = self._plain_sprite
+        if plain_arr.shape[2] == 3:
+            plain_arr = np.dstack([plain_arr, np.full((TILE_SIZE, TILE_SIZE), 255, dtype=np.uint8)])
+
+        for i, tid in enumerate(unique_ids):
+            sprite_arr = self._get_sprite_for_terrain(tid)
+
+            # Ensure sprite is RGBA
+            if sprite_arr.shape[2] == 3:
+                sprite_arr = np.dstack([sprite_arr, np.full((sprite_arr.shape[0], sprite_arr.shape[1]), 255, dtype=np.uint8)])
+
+            h, w, _ = sprite_arr.shape
+
+            # Case 1: Simple 16x16 tile. Place it in the LUT.
+            if h == TILE_SIZE and w == TILE_SIZE:
+                # If transparent, composite with plain tile first
+                if np.any(sprite_arr[:, :, 3] < 255):
+                    alpha = (sprite_arr[:, :, 3] / 255.0)[:, :, np.newaxis]
+                    
+                    # Blend RGB channels
+                    comp_rgb = sprite_arr[:, :, :3] * alpha + plain_arr[:, :, :3] * (1.0 - alpha)
+                    
+                    # Create final RGBA sprite (now fully opaque)
+                    lut[i] = np.dstack([comp_rgb.astype(np.uint8), np.full((h, w), 255, dtype=np.uint8)])
+                else:
+                    lut[i] = sprite_arr
+            # Case 2: Complex (non-16x16) tile. Use plain tile as a base and cache the complex sprite.
+            else:
+                lut[i] = plain_arr
+                
+                sprite_img = Image.fromarray(sprite_arr, "RGBA")
+                # Pre-composite tall sprites with a plain background for simplicity
+                if h > TILE_SIZE:
+                    comp = Image.new("RGBA", (w, h))
+                    plain_img = Image.fromarray(plain_arr, "RGBA")
+                    comp.paste(plain_img, (0, h - TILE_SIZE))
+                    comp.alpha_composite(sprite_img)
+                    complex_sprite_cache[tid] = comp
+                else:
+                     complex_sprite_cache[tid] = sprite_img
+
+
+        # 2. Construct Base Layer using the LUT (Vectorized)
+        # Map terrain_ids to LUT indices
+        max_id = unique_ids.max() if len(unique_ids) > 0 else 0
+        mapper = np.zeros(max_id + 1, dtype=int)
+        mapper[unique_ids] = np.arange(len(unique_ids))
+        indices = mapper[terrain_ids]
+
+        # Build the grid of tiles from the LUT
+        grid = lut[indices]  # Shape: (H, W, 16, 16, 4)
+
+        # Reshape into a single image array
+        base_layer_arr = grid.transpose(0, 2, 1, 3, 4).reshape(
+            height * TILE_SIZE, width * TILE_SIZE, 4
+        )
+        
+        # Create PIL image from the base layer
         canvas_width = width * TILE_SIZE
         canvas_height = height * TILE_SIZE + MAX_PROP_EXTENSION
         output = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))
+        base_layer_img = Image.fromarray(base_layer_arr, "RGBA")
+        output.paste(base_layer_img, (0, MAX_PROP_EXTENSION))
 
-        # Build sprite lookup for this map
-        unique_ids = np.unique(terrain_ids)
-        sprite_cache = {}
-        has_transparency_cache = {}
+        # 3. Render Complex Overlays
+        # Iterate only over the coordinates of complex tiles
+        if complex_sprite_cache:
+            for tid, sprite in complex_sprite_cache.items():
+                ys, xs = np.where(terrain_ids == tid)
+                for y, x in zip(ys, xs):
+                    px = x * TILE_SIZE
+                    py = y * TILE_SIZE + MAX_PROP_EXTENSION
+                    
+                    paste_y = py - (sprite.height - TILE_SIZE)
+                    
+                    output.paste(sprite, (px, paste_y), mask=sprite)
 
-        plain_img = Image.fromarray(self._plain_sprite, mode="RGBA")
-
-        for tid in unique_ids:
-            sprite_array = self._get_sprite_for_terrain(tid)
-            # Convert numpy array to PIL Image
-            sprite_img = Image.fromarray(sprite_array, mode="RGBA")
-            sprite_cache[tid] = sprite_img
-
-            # Check if sprite has any transparency (alpha < 255)
-            alpha = sprite_array[:, :, 3]
-            has_transparency_cache[tid] = np.any(alpha < 255)
-
-        # 1. Render all terrain tiles
-        for y in range(height):
-            for x in range(width):
-                terrain_id = int(terrain_ids[y, x])
-                sprite = sprite_cache.get(terrain_id, plain_img)
-                has_transparency = has_transparency_cache.get(terrain_id, False)
-
-                # Calculate position
-                px = x * TILE_SIZE
-                py = y * TILE_SIZE + MAX_PROP_EXTENSION
-
-                # Get sprite height
-                sprite_h = sprite.height
-
-                # For tall sprites (mountains, forests, properties), align bottom with tile base
-                if sprite_h > TILE_SIZE:
-                    offset = sprite_h - TILE_SIZE
-                    paste_y = py - offset
-                else:
-                    paste_y = py
-
-                # If sprite has transparency, draw plains underneath first
-                if has_transparency:
-                    output.paste(plain_img, (px, py))
-
-                # Alpha-composite the sprite on top
-                r, g, b, alpha = sprite.split()
-                output.paste(sprite, (px, paste_y), mask=alpha)
-
-        # 2. Render all units on top
+        # 4. Render Units (same as before, remains iterative)
         for unit in units:
             x, y = unit.get("x", -1), unit.get("y", -1)
-
-            # Skip invalid coordinates
             if not (0 <= x < width and 0 <= y < height):
                 continue
 
             ctry_str = str(unit.get("ctry", ""))
             ctry_id = AWBW_COUNTRY_CODE.get(ctry_str, 0)
-            
-            # Map AWBW Unit ID to Internal Unit ID
             unit_id_val = int(unit.get("id", 0))
             internal_unit_id = AWBW_UNIT_CODE.get(unit_id_val, 0)
 
             unit_sprite_arr = self._get_sprite_for_unit(internal_unit_id, ctry_id)
             if unit_sprite_arr is not None:
                 unit_sprite = Image.fromarray(unit_sprite_arr, mode="RGBA")
-
-                # Calculate position (units are centered or aligned to tile)
-                # Typically units are 16x16, sometimes larger?
-                # The atlas says 16x16 for unit tiles (based on TILE_SIZE=16)
-                # If they are larger, we align bottom
-
                 px = x * TILE_SIZE
                 py = y * TILE_SIZE + MAX_PROP_EXTENSION
+                paste_y = py - (unit_sprite.height - TILE_SIZE) if unit_sprite.height > TILE_SIZE else py
+                output.paste(unit_sprite, (px, paste_y), mask=unit_sprite)
 
-                sprite_h = unit_sprite.height
-                if sprite_h > TILE_SIZE:
-                    offset = sprite_h - TILE_SIZE
-                    paste_y = py - offset
-                else:
-                    paste_y = py
-
-                r, g, b, alpha = unit_sprite.split()
-                output.paste(unit_sprite, (px, paste_y), mask=alpha)
-
-                # 3. Render HP if < 10
                 hp = int(unit.get("hp", 10))
                 if 1 <= hp <= 9:
-                    # HP sprites are named "1", "2", ... in the atlas
                     hp_sprite_arr = self.atlas.get(str(hp))
                     if hp_sprite_arr is not None:
                         hp_sprite = Image.fromarray(hp_sprite_arr, mode="RGBA")
-                        
-                        # Position HP in the bottom-right of the tile
                         hp_w, hp_h = hp_sprite.size
                         hp_x = px + TILE_SIZE - hp_w
                         hp_y = py + TILE_SIZE - hp_h
-                        
-                        r_hp, g_hp, b_hp, alpha_hp = hp_sprite.split()
-                        output.paste(hp_sprite, (hp_x, hp_y), mask=alpha_hp)
-
+                        output.paste(hp_sprite, (hp_x, hp_y), mask=hp_sprite)
+        
         return output

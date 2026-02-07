@@ -28,6 +28,7 @@ class BotStats:
         self.render_count = 0
         self.render_total_time = 0.0
         self.render_longest_time = 0.0
+        self.render_longest_map_id = 0
 
     def record_api_request(self, duration: float):
         now = time.time()
@@ -38,11 +39,12 @@ class BotStats:
         self.api_timestamps.append(now)
         self._prune_timestamps()
 
-    def record_render(self, duration: float):
+    def record_render(self, duration: float, map_id: int):
         self.render_count += 1
         self.render_total_time += duration
         if duration > self.render_longest_time:
             self.render_longest_time = duration
+            self.render_longest_map_id = map_id
 
     def _prune_timestamps(self):
         # Remove timestamps older than 24 hours
@@ -91,4 +93,5 @@ class BotStats:
             "longest": self.render_longest_time,
             "average": avg,
             "count": self.render_count,
+            "longest_map_id": self.render_longest_map_id,
         }

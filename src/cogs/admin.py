@@ -13,6 +13,7 @@ from src.core.aw2_atlas import SpriteAtlas
 
 from src.config import config
 
+
 class Admin(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -98,7 +99,6 @@ class Admin(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"Failed to purge cache: {e}")
 
-    @app_commands.command(name="stats", description="Show comprehensive bot statistics")
     async def stats(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
@@ -152,6 +152,13 @@ class Admin(commands.Cog):
                 memory_str = f"{memory_mb:.1f} MB"
             except ImportError:
                 memory_str = "N/A (psutil not installed)"
+            
+            longest_render_map_id = render_stats.get('longest_map_id', 0)
+            if longest_render_map_id:
+                longest_render_str = f"{render_stats['longest'] * 1000:.1f} ms (Map ID: {longest_render_map_id})"
+            else:
+                longest_render_str = f"{render_stats['longest'] * 1000:.1f} ms"
+
 
             msg = (
                 f"**🤖 Bot Statistics**\n"
@@ -190,7 +197,7 @@ class Admin(commands.Cog):
                 f"Total Renders:    {render_stats['count']}\n"
                 f"Total Time:       {render_stats['total_time']:.2f} s\n"
                 f"Avg Render:       {render_stats['average'] * 1000:.1f} ms\n"
-                f"Longest Render:   {render_stats['longest'] * 1000:.1f} ms\n"
+                f"Longest Render:   {longest_render_str}\n"
                 f"```"
             )
 

@@ -297,7 +297,8 @@ class AW2Renderer:
 
             return False, out
         finally:
-            BotStats().record_render(time.time() - start_time)
+            map_id = map_data.get("id", 0)
+            BotStats().record_render(time.time() - start_time, map_id)
 
     def _render(
         self,
@@ -310,24 +311,35 @@ class AW2Renderer:
 
         # 1. Analyze sprites and build a Look-Up Table (LUT)
         unique_ids = np.unique(terrain_ids)
-        
+
         # LUT stores the final 16x16 tile sprite for each unique terrain ID
         lut = np.zeros((len(unique_ids), TILE_SIZE, TILE_SIZE, 4), dtype=np.uint8)
-        
+
         # Caches for complex sprites (non-16x16) and their final PIL images
         complex_sprite_cache = {}
-        
+
         # Ensure plain sprite is RGBA for compositing
         plain_arr = self._plain_sprite
         if plain_arr.shape[2] == 3:
-            plain_arr = np.dstack([plain_arr, np.full((TILE_SIZE, TILE_SIZE), 255, dtype=np.uint8)])
+            plain_arr = np.dstack(
+                [plain_arr, np.full((TILE_SIZE, TILE_SIZE), 255, dtype=np.uint8)]
+            )
 
         for i, tid in enumerate(unique_ids):
             sprite_arr = self._get_sprite_for_terrain(tid)
 
             # Ensure sprite is RGBA
             if sprite_arr.shape[2] == 3:
-                sprite_arr = np.dstack([sprite_arr, np.full((sprite_arr.shape[0], sprite_arr.shape[1]), 255, dtype=np.uint8)])
+                sprite_arr = np.dstack(
+                    [
+                        sprite_arr,
+                        np.full(
+                            (sprite_arr.shape[0], sprite_arr.shape[1]),
+                            255,
+                            dtype=np.uint8,
+                        ),
+                    ]
+                )
 
             h, w, _ = sprite_arr.shape
 
@@ -336,18 +348,25 @@ class AW2Renderer:
                 # If transparent, composite with plain tile first
                 if np.any(sprite_arr[:, :, 3] < 255):
                     alpha = (sprite_arr[:, :, 3] / 255.0)[:, :, np.newaxis]
-                    
+
                     # Blend RGB channels
-                    comp_rgb = sprite_arr[:, :, :3] * alpha + plain_arr[:, :, :3] * (1.0 - alpha)
-                    
+                    comp_rgb = sprite_arr[:, :, :3] * alpha + plain_arr[:, :, :3] * (
+                        1.0 - alpha
+                    )
+
                     # Create final RGBA sprite (now fully opaque)
-                    lut[i] = np.dstack([comp_rgb.astype(np.uint8), np.full((h, w), 255, dtype=np.uint8)])
+                    lut[i] = np.dstack(
+                        [
+                            comp_rgb.astype(np.uint8),
+                            np.full((h, w), 255, dtype=np.uint8),
+                        ]
+                    )
                 else:
                     lut[i] = sprite_arr
             # Case 2: Complex (non-16x16) tile. Use plain tile as a base and cache the complex sprite.
             else:
                 lut[i] = plain_arr
-                
+
                 sprite_img = Image.fromarray(sprite_arr, "RGBA")
                 # Pre-composite tall sprites with a plain background for simplicity
                 if h > TILE_SIZE:
@@ -357,8 +376,7 @@ class AW2Renderer:
                     comp.alpha_composite(sprite_img)
                     complex_sprite_cache[tid] = comp
                 else:
-                     complex_sprite_cache[tid] = sprite_img
-
+                    complex_sprite_cache[tid] = sprite_img
 
         # 2. Construct Base Layer using the LUT (Vectorized)
         # Map terrain_ids to LUT indices
@@ -374,7 +392,7 @@ class AW2Renderer:
         base_layer_arr = grid.transpose(0, 2, 1, 3, 4).reshape(
             height * TILE_SIZE, width * TILE_SIZE, 4
         )
-        
+
         # Create PIL image from the base layer
         canvas_width = width * TILE_SIZE
         canvas_height = height * TILE_SIZE + MAX_PROP_EXTENSION
@@ -385,17 +403,19 @@ class AW2Renderer:
         # 3. Render Complex Overlays
         # Iterate only over the coordinates of complex tiles
         if complex_sprite_cache:
+            paste = output.paste  # Attribute localization
             for tid, sprite in complex_sprite_cache.items():
                 ys, xs = np.where(terrain_ids == tid)
                 for y, x in zip(ys, xs):
                     px = x * TILE_SIZE
                     py = y * TILE_SIZE + MAX_PROP_EXTENSION
-                    
+
                     paste_y = py - (sprite.height - TILE_SIZE)
-                    
-                    output.paste(sprite, (px, paste_y), mask=sprite)
+
+                    paste(sprite, (px, paste_y), mask=sprite)
 
         # 4. Render Units (same as before, remains iterative)
+        paste = output.paste  # Attribute localization
         for unit in units:
             x, y = unit.get("x", -1), unit.get("y", -1)
             if not (0 <= x < width and 0 <= y < height):
@@ -411,8 +431,12 @@ class AW2Renderer:
                 unit_sprite = Image.fromarray(unit_sprite_arr, mode="RGBA")
                 px = x * TILE_SIZE
                 py = y * TILE_SIZE + MAX_PROP_EXTENSION
-                paste_y = py - (unit_sprite.height - TILE_SIZE) if unit_sprite.height > TILE_SIZE else py
-                output.paste(unit_sprite, (px, paste_y), mask=unit_sprite)
+                paste_y = (
+                    py - (unit_sprite.height - TILE_SIZE)
+                    if unit_sprite.height > TILE_SIZE
+                    else py
+                )
+                paste(unit_sprite, (px, paste_y), mask=unit_sprite)
 
                 hp = int(unit.get("hp", 10))
                 if 1 <= hp <= 9:
@@ -422,6 +446,6 @@ class AW2Renderer:
                         hp_w, hp_h = hp_sprite.size
                         hp_x = px + TILE_SIZE - hp_w
                         hp_y = py + TILE_SIZE - hp_h
-                        output.paste(hp_sprite, (hp_x, hp_y), mask=hp_sprite)
-        
+                        paste(hp_sprite, (hp_x, hp_y), mask=hp_sprite)
+
         return output

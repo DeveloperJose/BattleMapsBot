@@ -9,6 +9,7 @@ load_dotenv()
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
+
 class Config:
     _instance = None
     _config: Dict[str, Any] = {}
@@ -24,7 +25,7 @@ class Config:
         if not config_path.exists():
             # Fallback for when running from src directory or tests
             config_path = Path("../config.yaml")
-            
+
         if config_path.exists():
             with open(config_path, "r") as f:
                 self._config = yaml.safe_load(f)
@@ -33,12 +34,12 @@ class Config:
             self._config = {
                 "api": {
                     "map_url": "https://awbw.amarriner.com/api/map/map_info.php",
-                    "rate_limit": {"calls": 2, "period": 1.0}
+                    "rate_limit": {"calls": 2, "period": 1.0},
                 },
                 "cache": {
                     "db_path": "cache/maps.db",
                     "ttl_hours": 24,
-                    "max_size_mb": 250
+                    "max_size_mb": 250,
                 },
                 "renderer": {
                     "tile_size": 16,
@@ -46,8 +47,8 @@ class Config:
                     "sprite_dir": "/home/devj/local-arch/code/awbw/public_html/terrain/aw2",
                     "atlas_path": "cache/aw2_atlas.npz",
                     "fallback_color": [255, 0, 255, 255],
-                    "image_size": 1024
-                }
+                    "image_size": 1024,
+                },
             }
 
     def reload(self):
@@ -65,6 +66,7 @@ class Config:
     @property
     def renderer(self) -> Dict[str, Any]:
         return self._config.get("renderer", {})
+
 
 # Global instance
 config = Config()

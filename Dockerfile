@@ -6,14 +6,15 @@ WORKDIR /app
 RUN pip install uv
 
 # Copy project files
-COPY pyproject.toml README.md ./
+COPY pyproject.toml README.md uv.lock config.yaml ./
 COPY src/ ./src/
+COPY cache/ ./cache/
 
 # Install dependencies using uv
 RUN uv sync --no-dev
 
 # Create directories for data and cache
-RUN mkdir -p data cache
+RUN mkdir -p data
 
 # Run the bot
 CMD ["uv", "run", "src/main.py"]

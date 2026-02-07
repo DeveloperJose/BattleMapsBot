@@ -195,8 +195,17 @@ class AW2Renderer:
     def __init__(self):
         self.atlas = SpriteAtlas()
         self._fallback_sprite = self._create_fallback_sprite()
-        plain = self.atlas.get("plain")
-        self._plain_sprite = plain if plain is not None else self._fallback_sprite
+        plain_arr = self.atlas.get("plain")
+        self._plain_sprite = plain_arr if plain_arr is not None else self._fallback_sprite
+
+        # Pre-cache Pillow Image objects to avoid repeated fromarray calls
+        self._sprite_image_cache = {}
+        for name in self.atlas.sprite_names:
+            sprite_arr = self.atlas.get(name)
+            if sprite_arr is not None:
+                self._sprite_image_cache[name] = Image.fromarray(sprite_arr, "RGBA")
+
+        self._plain_image = self._sprite_image_cache.get("plain")
 
     def _create_fallback_sprite(self) -> np.ndarray:
         """Create a magenta fallback sprite for missing terrain."""
@@ -204,23 +213,23 @@ class AW2Renderer:
         sprite[:, :] = config.renderer["fallback_color"]
         return sprite
 
-    def _get_sprite_for_terrain(self, terrain_id: int) -> np.ndarray:
-        """Get sprite array for a terrain ID."""
-        sprite_name = TERRAIN_ID_TO_SPRITE.get(terrain_id)
+    def _get_sprite_for_terrain(self, terrain_id: int) -> Tuple[np.ndarray, str]:
+        """Get sprite array and name for a terrain ID."""
+        sprite_name = TERRAIN_ID_TO_SPRITE.get(terrain_id, "")
 
-        if sprite_name is None:
+        if not sprite_name:
             logger.warning(f"Unknown terrain ID: {terrain_id}")
-            return self._fallback_sprite
+            return self._fallback_sprite, ""
 
         sprite = self.atlas.get(sprite_name)
         if sprite is None:
             logger.warning(f"Sprite not found: {sprite_name} for terrain ID {terrain_id}")
-            return self._fallback_sprite
+            return self._fallback_sprite, ""
 
-        return sprite
+        return sprite, sprite_name
 
-    def _get_sprite_for_unit(self, unit_id: int, country_id: int) -> np.ndarray | None:
-        """Get sprite array for a unit."""
+    def _get_sprite_name_for_unit(self, unit_id: int, country_id: int) -> str | None:
+        """Get sprite name for a unit."""
         if country_id not in COUNTRY_ID_TO_PREFIX:
             return None
 
@@ -231,68 +240,54 @@ class AW2Renderer:
             logger.warning(f"No sprite suffix found for unit ID {unit_id} (Country: {country_id})")
             return None
 
-        sprite_name = f"{prefix}{suffix}"
-        sprite = self.atlas.get(sprite_name)
+        return f"{prefix}{suffix}"
 
-        if sprite is None:
-            logger.warning(f"Sprite not found in atlas: {sprite_name} (Unit ID: {unit_id})")
-            return None
+    def _get_sprite_image(self, sprite_name: str) -> Image.Image | None:
+        """Get a sprite Image from the cache, converting on-demand if needed."""
+        if sprite_name in self._sprite_image_cache:
+            return self._sprite_image_cache[sprite_name]
 
-        return sprite
+        sprite_arr = self.atlas.get(sprite_name)
+        if sprite_arr is not None:
+            image = Image.fromarray(sprite_arr, "RGBA")
+            self._sprite_image_cache[sprite_name] = image
+            return image
 
-    def _is_property(self, terrain_id: int) -> bool:
-        """Check if terrain ID is a property that needs plains underneath."""
-        return terrain_id in self.PROPERTY_IDS
+        logger.warning(f"Sprite not found in atlas or cache: {sprite_name}")
+        return None
 
     def render_map(self, map_data: Dict[str, Any]) -> Tuple[bool, io.BytesIO]:
-        """Render map using AW2 sprites.
-
-        Args:
-            map_data: Map data from API containing size_w, size_h, terr, unit
-
-        Returns:
-            Tuple of (is_animated, image_bytes)
-            Always returns is_animated=False for now.
-        """
+        """Render map using AW2 sprites."""
         start_time = time.time()
         try:
             width = map_data["size_w"]
             height = map_data["size_h"]
 
-            # API returns terrain as flat array in column-major order (W, H)
-            # Reshape to (W, H) then transpose to (H, W) for rendering
             terrain_data = np.array(map_data["terr"], dtype=np.int32)
 
             if terrain_data.ndim == 1:
-                # Flat array - reshape to (W, H) then transpose to (H, W)
                 terrain_ids = terrain_data.reshape(width, height).T
             else:
-                # Already 2D - just transpose to (H, W)
                 terrain_ids = terrain_data.T
 
-            # Validate dimensions
             if terrain_ids.shape != (height, width):
                 logger.warning(
                     f"Terrain shape {terrain_ids.shape} doesn't match map size {height}x{width}"
                 )
                 terrain_ids = terrain_ids[:height, :width]
 
-            # Render map image (terrain + units)
             img = self._render(terrain_ids, map_data.get("unit", []), width, height)
 
-            # Resize to fixed width as per config
             target_w = config.renderer.get("image_size", 1000)
             img_w, img_h = img.size
 
             if img_w != target_w and img_w > 0:
                 scale = target_w / img_w
                 new_h = int(img_h * scale)
-                # Use NEAREST for pixel art style
                 img = img.resize((target_w, new_h), resample=Image.Resampling.NEAREST)
 
-            # Save to buffer
             out = io.BytesIO()
-            img.save(out, format="PNG")
+            img.save(out, format="PNG", compress_level=1)
             out.seek(0)
 
             return False, out
@@ -309,113 +304,68 @@ class AW2Renderer:
     ) -> Image.Image:
         """Render map using vectorized numpy operations for the base layer."""
 
-        # 1. Analyze sprites and build a Look-Up Table (LUT)
         unique_ids = np.unique(terrain_ids)
-
-        # LUT stores the final 16x16 tile sprite for each unique terrain ID
         lut = np.zeros((len(unique_ids), TILE_SIZE, TILE_SIZE, 4), dtype=np.uint8)
-
-        # Caches for complex sprites (non-16x16) and their final PIL images
         complex_sprite_cache = {}
 
-        # Ensure plain sprite is RGBA for compositing
         plain_arr = self._plain_sprite
-        if plain_arr.shape[2] == 3:
-            plain_arr = np.dstack(
-                [plain_arr, np.full((TILE_SIZE, TILE_SIZE), 255, dtype=np.uint8)]
-            )
 
         for i, tid in enumerate(unique_ids):
-            sprite_arr = self._get_sprite_for_terrain(tid)
+            sprite_arr, sprite_name = self._get_sprite_for_terrain(tid)
+            h, w, c = sprite_arr.shape
+            
+            # Ensure sprite is RGBA for LUT
+            final_sprite_arr = sprite_arr
+            if c == 3:
+                alpha_channel = np.full((h, w, 1), 255, dtype=np.uint8)
+                final_sprite_arr = np.concatenate([sprite_arr, alpha_channel], axis=2)
 
-            # Ensure sprite is RGBA
-            if sprite_arr.shape[2] == 3:
-                sprite_arr = np.dstack(
-                    [
-                        sprite_arr,
-                        np.full(
-                            (sprite_arr.shape[0], sprite_arr.shape[1]),
-                            255,
-                            dtype=np.uint8,
-                        ),
-                    ]
-                )
-
-            h, w, _ = sprite_arr.shape
-
-            # Case 1: Simple 16x16 tile. Place it in the LUT.
             if h == TILE_SIZE and w == TILE_SIZE:
-                # If transparent, composite with plain tile first
-                if np.any(sprite_arr[:, :, 3] < 255):
-                    alpha = (sprite_arr[:, :, 3] / 255.0)[:, :, np.newaxis]
-
-                    # Blend RGB channels
-                    comp_rgb = sprite_arr[:, :, :3] * alpha + plain_arr[:, :, :3] * (
-                        1.0 - alpha
-                    )
-
-                    # Create final RGBA sprite (now fully opaque)
-                    lut[i] = np.dstack(
-                        [
-                            comp_rgb.astype(np.uint8),
-                            np.full((h, w), 255, dtype=np.uint8),
-                        ]
-                    )
+                if np.any(final_sprite_arr[:, :, 3] < 255):
+                    alpha = (final_sprite_arr[:, :, 3] / 255.0)[:, :, np.newaxis]
+                    comp_rgb = final_sprite_arr[:, :, :3] * alpha + plain_arr[:, :, :3] * (1.0 - alpha)
+                    lut[i] = np.dstack([comp_rgb.astype(np.uint8), np.full((h, w), 255, dtype=np.uint8)])
                 else:
-                    lut[i] = sprite_arr
-            # Case 2: Complex (non-16x16) tile. Use plain tile as a base and cache the complex sprite.
+                    lut[i] = final_sprite_arr
             else:
                 lut[i] = plain_arr
+                sprite_img = self._get_sprite_image(sprite_name)
+                if sprite_img:
+                    if h > TILE_SIZE:
+                        comp = Image.new("RGBA", (w, h))
+                        if self._plain_image:
+                            comp.paste(self._plain_image, (0, h - TILE_SIZE))
+                        comp.alpha_composite(sprite_img)
+                        complex_sprite_cache[tid] = comp
+                    else:
+                        complex_sprite_cache[tid] = sprite_img
 
-                sprite_img = Image.fromarray(sprite_arr, "RGBA")
-                # Pre-composite tall sprites with a plain background for simplicity
-                if h > TILE_SIZE:
-                    comp = Image.new("RGBA", (w, h))
-                    plain_img = Image.fromarray(plain_arr, "RGBA")
-                    comp.paste(plain_img, (0, h - TILE_SIZE))
-                    comp.alpha_composite(sprite_img)
-                    complex_sprite_cache[tid] = comp
-                else:
-                    complex_sprite_cache[tid] = sprite_img
-
-        # 2. Construct Base Layer using the LUT (Vectorized)
-        # Map terrain_ids to LUT indices
         max_id = unique_ids.max() if len(unique_ids) > 0 else 0
         mapper = np.zeros(max_id + 1, dtype=int)
         mapper[unique_ids] = np.arange(len(unique_ids))
         indices = mapper[terrain_ids]
-
-        # Build the grid of tiles from the LUT
-        grid = lut[indices]  # Shape: (H, W, 16, 16, 4)
-
-        # Reshape into a single image array
+        
+        grid = lut[indices]
         base_layer_arr = grid.transpose(0, 2, 1, 3, 4).reshape(
             height * TILE_SIZE, width * TILE_SIZE, 4
         )
-
-        # Create PIL image from the base layer
+        
         canvas_width = width * TILE_SIZE
         canvas_height = height * TILE_SIZE + MAX_PROP_EXTENSION
         output = Image.new("RGBA", (canvas_width, canvas_height), (0, 0, 0, 0))
         base_layer_img = Image.fromarray(base_layer_arr, "RGBA")
         output.paste(base_layer_img, (0, MAX_PROP_EXTENSION))
 
-        # 3. Render Complex Overlays
-        # Iterate only over the coordinates of complex tiles
+        paste = output.paste
         if complex_sprite_cache:
-            paste = output.paste  # Attribute localization
             for tid, sprite in complex_sprite_cache.items():
                 ys, xs = np.where(terrain_ids == tid)
                 for y, x in zip(ys, xs):
                     px = x * TILE_SIZE
                     py = y * TILE_SIZE + MAX_PROP_EXTENSION
-
                     paste_y = py - (sprite.height - TILE_SIZE)
-
                     paste(sprite, (px, paste_y), mask=sprite)
 
-        # 4. Render Units (same as before, remains iterative)
-        paste = output.paste  # Attribute localization
         for unit in units:
             x, y = unit.get("x", -1), unit.get("y", -1)
             if not (0 <= x < width and 0 <= y < height):
@@ -426,26 +376,25 @@ class AW2Renderer:
             unit_id_val = int(unit.get("id", 0))
             internal_unit_id = AWBW_UNIT_CODE.get(unit_id_val, 0)
 
-            unit_sprite_arr = self._get_sprite_for_unit(internal_unit_id, ctry_id)
-            if unit_sprite_arr is not None:
-                unit_sprite = Image.fromarray(unit_sprite_arr, mode="RGBA")
-                px = x * TILE_SIZE
-                py = y * TILE_SIZE + MAX_PROP_EXTENSION
-                paste_y = (
-                    py - (unit_sprite.height - TILE_SIZE)
-                    if unit_sprite.height > TILE_SIZE
-                    else py
-                )
-                paste(unit_sprite, (px, paste_y), mask=unit_sprite)
+            sprite_name = self._get_sprite_name_for_unit(internal_unit_id, ctry_id)
+            if sprite_name:
+                unit_sprite = self._get_sprite_image(sprite_name)
+                if unit_sprite:
+                    px = x * TILE_SIZE
+                    py = y * TILE_SIZE + MAX_PROP_EXTENSION
+                    paste_y = (
+                        py - (unit_sprite.height - TILE_SIZE)
+                        if unit_sprite.height > TILE_SIZE
+                        else py
+                    )
+                    paste(unit_sprite, (px, paste_y), mask=unit_sprite)
 
-                hp = int(unit.get("hp", 10))
-                if 1 <= hp <= 9:
-                    hp_sprite_arr = self.atlas.get(str(hp))
-                    if hp_sprite_arr is not None:
-                        hp_sprite = Image.fromarray(hp_sprite_arr, mode="RGBA")
-                        hp_w, hp_h = hp_sprite.size
-                        hp_x = px + TILE_SIZE - hp_w
-                        hp_y = py + TILE_SIZE - hp_h
-                        paste(hp_sprite, (hp_x, hp_y), mask=hp_sprite)
-
+                    hp = int(unit.get("hp", 10))
+                    if 1 <= hp <= 9:
+                        hp_sprite = self._get_sprite_image(str(hp))
+                        if hp_sprite:
+                            hp_w, hp_h = hp_sprite.size
+                            hp_x = px + TILE_SIZE - hp_w
+                            hp_y = py + TILE_SIZE - hp_h
+                            paste(hp_sprite, (hp_x, hp_y), mask=hp_sprite)
         return output

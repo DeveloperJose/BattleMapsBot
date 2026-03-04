@@ -99,9 +99,7 @@ class Admin(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"Failed to purge cache: {e}")
 
-    @app_commands.command(
-        name="rebuild_atlas", description="Rebuild the sprite atlas"
-    )
+    @app_commands.command(name="rebuild_atlas", description="Rebuild the sprite atlas")
     async def rebuild_atlas(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 

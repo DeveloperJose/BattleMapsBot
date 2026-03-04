@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 TILE_SIZE = config.renderer["tile_size"]
 SPRITE_DIR = Path(config.renderer["sprite_dir"])
+NEWSEAS_DIR = Path(config.renderer.get("newseas_dir", ""))
 ATLAS_PATH = Path(config.renderer["atlas_path"])
 
 # Regex to filter files:
@@ -25,6 +26,9 @@ ATLAS_PATH = Path(config.renderer["atlas_path"])
 # - Must NOT start with gs_
 VALID_SPRITE_PATTERN = re.compile(r"^(?!gs_).*\.(gif|png)$")
 EXCLUDE_WEATHER_PATTERN = re.compile(r"_(rain|snow)\.(gif|png)$")
+
+# Regex for newseas sprites - include all sea*.png files
+NEWSEAS_PATTERN = re.compile(r"^sea\d+\.png$")
 
 
 def _should_include_file(filename: str) -> bool:
@@ -93,9 +97,7 @@ def build_atlas(force: bool = False) -> Dict[str, np.ndarray]:
 
     atlas = {}
 
-    image_files = sorted(SPRITE_DIR.glob("*.gif")) + sorted(
-        SPRITE_DIR.glob("*.png")
-    )
+    image_files = sorted(SPRITE_DIR.glob("*.gif")) + sorted(SPRITE_DIR.glob("*.png"))
 
     for image_file in image_files:
         filename = image_file.name
@@ -111,18 +113,39 @@ def build_atlas(force: bool = False) -> Dict[str, np.ndarray]:
         if sprite_data is None:
             continue
 
-        # Validate that it's a proper RGBA image
         if len(sprite_data.shape) != 3 or sprite_data.shape[2] != 4:
             logger.warning(
                 f"Unexpected sprite shape {sprite_data.shape} for {filename}, skipping"
             )
             continue
 
-        # Store at native resolution - don't resize
         atlas[sprite_name] = sprite_data
         logger.debug(
             f"Added sprite: {sprite_name} ({sprite_data.shape[0]}x{sprite_data.shape[1]})"
         )
+
+    # Load newseas sprites if directory exists
+    if NEWSEAS_DIR.exists():
+        logger.info(f"Loading newseas sprites from {NEWSEAS_DIR}")
+        newseas_files = sorted(NEWSEAS_DIR.glob("sea*.png"))
+        for image_file in newseas_files:
+            filename = image_file.name
+            if not NEWSEAS_PATTERN.match(filename):
+                continue
+            
+            sprite_name = _extract_sprite_name(filename)
+            if sprite_name is None:
+                continue
+            
+            sprite_data = _load_image_frame(image_file)
+            if sprite_data is None:
+                continue
+            
+            if len(sprite_data.shape) != 3 or sprite_data.shape[2] != 4:
+                continue
+            
+            atlas[sprite_name] = sprite_data
+            logger.debug(f"Added newseas: {sprite_name}")
 
     logger.info(f"Built atlas with {len(atlas)} sprites")
 
@@ -168,7 +191,6 @@ class SpriteAtlas:
         """Force-reload the atlas from disk."""
         logger.info("Reloading sprite atlas from disk...")
         self._atlas = load_atlas()
-
 
     def get(self, name: str) -> Optional[np.ndarray]:
         """Get sprite by name. Returns None if not found."""

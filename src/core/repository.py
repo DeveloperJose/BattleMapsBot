@@ -71,7 +71,7 @@ class MapRepository:
             updated = datetime.fromisoformat(updated_at)
             expiry = updated + timedelta(seconds=CACHE_TTL_SECONDS)
             return datetime.now() > expiry
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return True
 
     def _get_from_db(self, map_id: int) -> Optional[Dict[str, Any]]:

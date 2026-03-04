@@ -33,6 +33,9 @@ renderer:
   # Directory containing the raw .gif sprite files extracted from AWBW
   sprite_dir: "/app/terrain/aw2"
   
+  # Directory containing newseas numbered sprites for advanced sea rendering
+  newseas_dir: "/app/terrain/newseas"
+  
   # Path to the pre-compiled numpy sprite atlas
   atlas_path: "cache/aw2_atlas.npz"
   

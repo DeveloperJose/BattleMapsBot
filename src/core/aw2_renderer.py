@@ -23,7 +23,15 @@ from src.core.aw2_data import (
     LAND_IDS,
     SEA_ID,
     SHOAL_IDS,
-    PROPERTY_IDS
+    PROPERTY_IDS,
+)
+from src.core.aw2_sea_data import (
+    SEA_MASK_TO_SPRITE,
+    RIVER_CONNECT_N,
+    RIVER_CONNECT_W,
+    RIVER_CONNECT_S,
+    RIVER_CONNECT_E,
+    SEA_WATER_IDS,
 )
 from src.core.stats import BotStats
 from src.utils.data.element_id import AWBW_COUNTRY_CODE, AWBW_UNIT_CODE
@@ -95,30 +103,53 @@ class AW2Renderer:
         return f"{prefix}{suffix}"
 
     def _get_sea_sprite_name(self, x: int, y: int, terrain_ids: np.ndarray) -> str:
-        """Get the sprite name for a sea tile based on its neighbors."""
+        """Get the numbered sea sprite based on neighbor bitmask.
+        
+        Matches the logic from map_renderer.js getSea() method.
+        Uses newseas sprites: sea0 through sea255.
+        """
         height, width = terrain_ids.shape
-        shores = []
 
-        # Check N, E, S, W neighbors
-        # North
-        if y > 0 and terrain_ids[y - 1, x] in LAND_IDS:
-            shores.append("n")
-        # East
-        if x < width - 1 and terrain_ids[y, x + 1] in LAND_IDS:
-            shores.append("e")
-        # South
-        if y < height - 1 and terrain_ids[y + 1, x] in LAND_IDS:
-            shores.append("s")
-        # West
-        if x > 0 and terrain_ids[y, x - 1] in LAND_IDS:
-            shores.append("w")
+        def get_terrain_id(px, py):
+            if 0 <= py < height and 0 <= px < width:
+                return terrain_ids[py, px]
+            return 32  # Out of bounds treated as land (plain)
 
-        if not shores:
-            return "sea"
+        total = 0
+        border = [
+            (x - 1, y - 1),  # NW (k=0)
+            (x, y - 1),      # N (k=1)
+            (x + 1, y - 1),  # NE (k=2)
+            (x + 1, y),      # E (k=3)
+            (x + 1, y + 1),  # SE (k=4)
+            (x, y + 1),      # S (k=5)
+            (x - 1, y + 1),  # SW (k=6)
+            (x - 1, y),      # W (k=7)
+        ]
 
-        # AWBW appears to sort the cardinal directions alphabetically
-        shores.sort()
-        return f"seashore{''.join(shores)}"
+        for k, (bx, by) in enumerate(border):
+            tid = get_terrain_id(bx, by)
+            # Water: sea, reef, bridge, shoal, teleport
+            if 26 <= tid <= 33 or tid == 195:
+                continue
+            elif 4 <= tid <= 14:  # rivers
+                if k == 1 and tid in RIVER_SVC:
+                    total |= 0x05
+                elif k == 3 and tid in RIVER_WHC:
+                    total |= 0x14
+                elif k == 5 and tid in RIVER_NVC:
+                    total |= 0x50
+                elif k == 7 and tid in RIVER_EHC:
+                    total |= 0x41
+                else:
+                    total |= 1 << k
+            else:
+                total |= 1 << k
+
+        # Clean up diagonal artifacts - matches JS: total &= ~((total << 1 | total >> 1 | total >> 7) & 0x55)
+        total &= ~(((total << 1) | (total >> 1) | (total >> 7)) & 0x55)
+
+        return f"sea{total}"
 
     def _get_shoal_sprite_name(self, x: int, y: int, terrain_ids: np.ndarray) -> str:
         """Get the sprite name for a shoal tile based on its neighbors."""
@@ -163,7 +194,6 @@ class AW2Renderer:
             total += (3**k) * tval
 
         return f"shoal{total}"
-
 
     def _get_sprite_image(self, sprite_name: str) -> Image.Image | None:
         """Get a sprite Image from the cache, converting on-demand if needed."""

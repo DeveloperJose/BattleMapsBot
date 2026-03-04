@@ -10,7 +10,7 @@ from src.config import config
 
 logger = logging.getLogger(__name__)
 
-CACHE_TTL_HOURS = config.cache["ttl_hours"]
+CACHE_TTL_SECONDS = config.cache["ttl_seconds"]
 MAX_CACHE_SIZE_MB = config.cache["max_size_mb"]
 
 
@@ -69,9 +69,9 @@ class MapRepository:
         """Check if cache entry is older than TTL."""
         try:
             updated = datetime.fromisoformat(updated_at)
-            expiry = updated + timedelta(hours=CACHE_TTL_HOURS)
+            expiry = updated + timedelta(seconds=CACHE_TTL_SECONDS)
             return datetime.now() > expiry
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return True
 
     def _get_from_db(self, map_id: int) -> Optional[Dict[str, Any]]:
@@ -85,7 +85,7 @@ class MapRepository:
                     json_data, updated_at = row
                     if self._is_expired(updated_at):
                         logger.info(
-                            f"Map {map_id} cache expired (older than {CACHE_TTL_HOURS}h)"
+                            f"Map {map_id} cache expired (older than {CACHE_TTL_SECONDS}s)"
                         )
                         return None
                     return json.loads(json_data)
@@ -188,7 +188,7 @@ class MapRepository:
             "db_size_mb": round(db_size, 2),
             "entry_count": entry_count,
             "size_limit_mb": MAX_CACHE_SIZE_MB,
-            "ttl_hours": CACHE_TTL_HOURS,
+            "ttl_seconds": CACHE_TTL_SECONDS,
         }
 
     async def close(self):

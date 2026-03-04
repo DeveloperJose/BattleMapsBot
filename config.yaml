@@ -13,8 +13,8 @@ cache:
   # Path to the SQLite database file for caching map data
   db_path: "cache/maps.db"
   
-  # Time To Live for cache entries in hours
-  ttl_hours: 1
+  # Time To Live for cache entries in seconds
+  ttl_seconds: 60
   
   # Maximum size of the cache database in Megabytes
   # When exceeded, oldest entries are pruned
@@ -31,7 +31,7 @@ renderer:
   max_prop_extension: 16
   
   # Directory containing the raw .gif sprite files extracted from AWBW
-  sprite_dir: "/home/devj/local-arch/code/awbw/public_html/terrain/aw2"
+  sprite_dir: "/app/terrain/aw2"
   
   # Path to the pre-compiled numpy sprite atlas
   atlas_path: "cache/aw2_atlas.npz"

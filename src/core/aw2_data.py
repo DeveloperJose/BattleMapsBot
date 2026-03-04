@@ -292,3 +292,59 @@ UNIT_ID_TO_SPRITE_NAME = {
 
 # Maximum terrain ID
 MAX_TERRAIN_ID = max(TERRAIN_ID_TO_SPRITE.keys())
+
+# River tile IDs for each direction (ported from AWBW site's map_renderer.js)
+RIVER_SVC = [5, 6, 7, 8, 11, 12, 14]  # South, Vertical, Cross
+RIVER_EHC = [4, 6, 7, 10, 11, 13, 14]  # East, Horizontal, Cross
+RIVER_WHC = [4, 6, 8, 9, 11, 12, 13]  # West, Horizontal, Cross
+RIVER_NVC = [5, 6, 9, 10, 12, 13, 14]  # North, Vertical, Cross
+
+SEA_ID = 28
+REEF_ID = 33
+SHOAL_IDS = {29, 30, 31, 32}
+
+# All property IDs for all factions
+PROPERTY_IDS = {
+    34, 35, 36, 37,  # Neutral
+    38, 39, 40, 41, 42,  # OS
+    43, 44, 45, 46, 47,  # BM
+    48, 49, 50, 51, 52,  # GE
+    53, 54, 55, 56, 57,  # YC
+    81, 82, 83, 84, 85,  # RF
+    86, 87, 88, 89, 90,  # GS
+    91, 92, 93, 94, 95,  # BH
+    96, 97, 98, 99, 100,  # BD
+    117, 118, 119, 120, 121,  # AB
+    122, 123, 124, 125, 126,  # JS
+    127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137,  # Com Towers
+    138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148,  # Labs
+    149, 150, 151, 152, 153, 154, 155,  # CI
+    156, 157, 158, 159, 160, 161, 162,  # PC
+    163, 164, 165, 166, 167, 168, 169,  # TG
+    170, 171, 172, 173, 174, 175, 176,  # PL
+    181, 182, 183, 184, 185, 186, 187,  # AR
+    188, 189, 190, 191, 192, 193, 194,  # WN
+    196, 197, 198, 199, 200, 201, 202,  # AA
+    203, 204, 205, 206, 207, 208, 209,  # NE
+    210, 211, 212, 213, 214, 215, 216,  # SC
+    217, 218, 219, 220, 221, 222, 223,  # UW
+}
+
+# All non-water, non-shoal, non-reef terrain IDs
+LAND_IDS = {
+    # Plain, Mountain, Wood
+    1, 2, 3,
+    # Rivers
+    4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    # Roads
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+    # Bridges
+    26, 27,
+    # Pipes
+    101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+    # Pipe Seams and Rubble
+    113, 114, 115, 116,
+    # Special
+    195,  # teleporter
+}.union(PROPERTY_IDS)
+

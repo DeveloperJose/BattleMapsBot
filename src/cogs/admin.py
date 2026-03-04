@@ -8,7 +8,7 @@ import platform
 from datetime import datetime, timedelta
 from src.core.repository import MapRepository
 from src.core.stats import BotStats
-from src.core.aw2_atlas import SpriteAtlas
+from src.core.aw2_atlas import SpriteAtlas, build_atlas
 
 
 from src.config import config
@@ -99,6 +99,23 @@ class Admin(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"Failed to purge cache: {e}")
 
+    @app_commands.command(
+        name="rebuild_atlas", description="Rebuild the sprite atlas"
+    )
+    async def rebuild_atlas(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+
+        try:
+            build_atlas(force=True)
+            # Reload the atlas in the singleton instance
+            SpriteAtlas().reload()
+            await interaction.followup.send(
+                "Sprite atlas rebuilt and reloaded successfully."
+            )
+        except Exception as e:
+            await interaction.followup.send(f"Failed to rebuild atlas: {e}")
+            traceback.print_exc()
+
     @app_commands.command(name="stats", description="Show bot statistics")
     async def stats(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -179,7 +196,7 @@ class Admin(commands.Cog):
                 f"```\n"
                 f"DB Cache Size:    {cache_stats['db_size_mb']:.2f} MB / {cache_stats['size_limit_mb']} MB\n"
                 f"Cached Maps:      {cache_stats['entry_count']}\n"
-                f"Cache TTL:        {cache_stats['ttl_hours']} hours\n"
+                f"Cache TTL:        {cache_stats['ttl_seconds']} seconds\n"
                 f"Atlas Size:       {atlas_size_mb:.2f} MB\n"
                 f"Atlas Sprites:    {atlas_count}\n"
                 f"```\n"

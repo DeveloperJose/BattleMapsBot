@@ -16,6 +16,14 @@ from src.core.aw2_data import (
     TERRAIN_ID_TO_SPRITE,
     COUNTRY_ID_TO_PREFIX,
     UNIT_ID_TO_SPRITE_NAME,
+    RIVER_SVC,
+    RIVER_EHC,
+    RIVER_WHC,
+    RIVER_NVC,
+    LAND_IDS,
+    SEA_ID,
+    SHOAL_IDS,
+    PROPERTY_IDS
 )
 from src.core.stats import BotStats
 from src.utils.data.element_id import AWBW_COUNTRY_CODE, AWBW_UNIT_CODE
@@ -29,168 +37,6 @@ MAX_PROP_EXTENSION = config.renderer["max_prop_extension"]
 
 class AW2Renderer:
     """Renderer using actual AW2 game sprites."""
-
-    # Terrain IDs that are properties (need plains underneath)
-    # Includes: city, base, airport, port, hq, comtower, lab for all factions
-    PROPERTY_IDS = {
-        # Neutral properties (34-37)
-        34,
-        35,
-        36,
-        37,
-        # OS properties (38-42)
-        38,
-        39,
-        40,
-        41,
-        42,
-        # BM properties (43-47)
-        43,
-        44,
-        45,
-        46,
-        47,
-        # GE properties (48-52)
-        48,
-        49,
-        50,
-        51,
-        52,
-        # YC properties (53-57)
-        53,
-        54,
-        55,
-        56,
-        57,
-        # Red Fire properties (81-85)
-        81,
-        82,
-        83,
-        84,
-        85,
-        # Grey Sky properties (86-90)
-        86,
-        87,
-        88,
-        89,
-        90,
-        # Black Hole properties (91-95)
-        91,
-        92,
-        93,
-        94,
-        95,
-        # Brown Desert properties (96-100)
-        96,
-        97,
-        98,
-        99,
-        100,
-        # Com Towers (127-137)
-        127,
-        128,
-        129,
-        130,
-        131,
-        132,
-        133,
-        134,
-        135,
-        136,
-        137,
-        # Labs (138-148)
-        138,
-        139,
-        140,
-        141,
-        142,
-        143,
-        144,
-        145,
-        146,
-        147,
-        148,
-        # Cobalt Ice properties (149-155)
-        149,
-        150,
-        151,
-        152,
-        153,
-        154,
-        155,
-        # Pink Cosmos properties (156-162)
-        156,
-        157,
-        158,
-        159,
-        160,
-        161,
-        162,
-        # Teal Galaxy properties (163-169)
-        163,
-        164,
-        165,
-        166,
-        167,
-        168,
-        169,
-        # Purple Lightning properties (170-176)
-        170,
-        171,
-        172,
-        173,
-        174,
-        175,
-        176,
-        # Acid Rain properties (181-187)
-        181,
-        182,
-        183,
-        184,
-        185,
-        186,
-        187,
-        # White Nova properties (188-194)
-        188,
-        189,
-        190,
-        191,
-        192,
-        193,
-        194,
-        # Azure Asteroid properties (196-202)
-        196,
-        197,
-        198,
-        199,
-        200,
-        201,
-        202,
-        # Noir Eclipse properties (203-209)
-        203,
-        204,
-        205,
-        206,
-        207,
-        208,
-        209,
-        # Silver Claw properties (210-216)
-        210,
-        211,
-        212,
-        213,
-        214,
-        215,
-        216,
-        # Umber Wilds properties (217-223)
-        217,
-        218,
-        219,
-        220,
-        221,
-        222,
-        223,
-    }
 
     def __init__(self):
         self.atlas = SpriteAtlas()
@@ -247,6 +93,77 @@ class AW2Renderer:
             return None
 
         return f"{prefix}{suffix}"
+
+    def _get_sea_sprite_name(self, x: int, y: int, terrain_ids: np.ndarray) -> str:
+        """Get the sprite name for a sea tile based on its neighbors."""
+        height, width = terrain_ids.shape
+        shores = []
+
+        # Check N, E, S, W neighbors
+        # North
+        if y > 0 and terrain_ids[y - 1, x] in LAND_IDS:
+            shores.append("n")
+        # East
+        if x < width - 1 and terrain_ids[y, x + 1] in LAND_IDS:
+            shores.append("e")
+        # South
+        if y < height - 1 and terrain_ids[y + 1, x] in LAND_IDS:
+            shores.append("s")
+        # West
+        if x > 0 and terrain_ids[y, x - 1] in LAND_IDS:
+            shores.append("w")
+
+        if not shores:
+            return "sea"
+
+        # AWBW appears to sort the cardinal directions alphabetically
+        shores.sort()
+        return f"seashore{''.join(shores)}"
+
+    def _get_shoal_sprite_name(self, x: int, y: int, terrain_ids: np.ndarray) -> str:
+        """Get the sprite name for a shoal tile based on its neighbors."""
+        height, width = terrain_ids.shape
+        total = 0
+
+        # Define border coordinates [top, left, right, bottom]
+        border = [
+            (y - 1, x),  # Top
+            (y, x - 1),  # Left
+            (y, x + 1),  # Right
+            (y + 1, x),  # Bottom
+        ]
+
+        for k, (by, bx) in enumerate(border):
+            tval = 2
+            if not (0 <= by < height and 0 <= bx < width):
+                tval = 0  # Treat out-of-bounds as sea
+            else:
+                b_tid = terrain_ids[by, bx]
+                if b_tid in {28, 33}:  # sea or reef is a connection
+                    tval = 0
+                elif 4 <= b_tid <= 14:  # rivers
+                    tval = 2  # Default to no connection
+                    if k == 0 and b_tid in RIVER_SVC:
+                        tval = 1
+                    elif k == 1 and b_tid in RIVER_EHC:
+                        tval = 1
+                    elif k == 2 and b_tid in RIVER_WHC:
+                        tval = 1
+                    elif k == 3 and b_tid in RIVER_NVC:
+                        tval = 1
+                elif b_tid == 26:  # hbridge
+                    if k == 0 or k == 3:  # Connects vertically
+                        tval = 1
+                elif b_tid == 27:  # vbridge
+                    if k == 1 or k == 2:  # Connects horizontally
+                        tval = 1
+                elif b_tid in SHOAL_IDS or b_tid == 195:  # shoal or teleporter is land
+                    tval = 1
+
+            total += (3**k) * tval
+
+        return f"shoal{total}"
+
 
     def _get_sprite_image(self, sprite_name: str) -> Image.Image | None:
         """Get a sprite Image from the cache, converting on-demand if needed."""
@@ -313,11 +230,28 @@ class AW2Renderer:
         unique_ids = np.unique(terrain_ids)
         lut = np.zeros((len(unique_ids), TILE_SIZE, TILE_SIZE, 4), dtype=np.uint8)
         complex_sprite_cache = {}
+        property_sprite_cache = {}
 
         plain_arr = self._plain_sprite
 
         for i, tid in enumerate(unique_ids):
             sprite_arr, sprite_name = self._get_sprite_for_terrain(tid)
+
+            if tid in PROPERTY_IDS:
+                lut[i] = plain_arr
+                sprite_img = self._get_sprite_image(sprite_name)
+                if sprite_img:
+                    h, w = sprite_img.height, sprite_img.width
+                    if h > TILE_SIZE:
+                        comp = Image.new("RGBA", (w, h))
+                        if self._plain_image:
+                            comp.paste(self._plain_image, (0, h - TILE_SIZE))
+                        comp.alpha_composite(sprite_img)
+                        property_sprite_cache[tid] = comp
+                    else:
+                        property_sprite_cache[tid] = sprite_img
+                continue
+
             h, w, c = sprite_arr.shape
 
             # Ensure sprite is RGBA for LUT
@@ -376,6 +310,46 @@ class AW2Renderer:
                 for y, x in zip(ys, xs):
                     px = x * TILE_SIZE
                     py = y * TILE_SIZE + MAX_PROP_EXTENSION
+                    paste_y = py - (sprite.height - TILE_SIZE)
+                    paste(sprite, (px, paste_y), mask=sprite)
+
+        # Correct seas after base rendering
+        sea_ys, sea_xs = np.where(terrain_ids == SEA_ID)
+        for y, x in zip(sea_ys, sea_xs):
+            sprite_name = self._get_sea_sprite_name(x, y, terrain_ids)
+            sprite_img = self._get_sprite_image(sprite_name)
+            if sprite_img:
+                px = x * TILE_SIZE
+                py = y * TILE_SIZE + MAX_PROP_EXTENSION
+                paste(sprite_img, (px, py), mask=sprite_img)
+
+        # Correct shoals after base rendering
+        shoal_ys, shoal_xs = np.where(np.isin(terrain_ids, list(SHOAL_IDS)))
+
+        for y, x in zip(shoal_ys, shoal_xs):
+            sprite_name = self._get_shoal_sprite_name(x, y, terrain_ids)
+            sprite_img = self._get_sprite_image(sprite_name)
+            if sprite_img:
+                px = x * TILE_SIZE
+                py = y * TILE_SIZE + MAX_PROP_EXTENSION
+                # We need to paste the plain sprite underneath first for transparency
+                if self._plain_image:
+                    output.paste(self._plain_image, (px, py))
+                paste(sprite_img, (px, py), mask=sprite_img)
+
+        # Draw properties on top of terrain and shoals
+        if property_sprite_cache:
+            for tid, sprite in property_sprite_cache.items():
+                ys, xs = np.where(terrain_ids == tid)
+                for y, x in zip(ys, xs):
+                    px = x * TILE_SIZE
+                    py = y * TILE_SIZE + MAX_PROP_EXTENSION
+
+                    # For standard size props, paste plains first for transparency
+                    # Tall props have plains pre-composited.
+                    if sprite.height == TILE_SIZE and self._plain_image:
+                        output.paste(self._plain_image, (px, py))
+
                     paste_y = py - (sprite.height - TILE_SIZE)
                     paste(sprite, (px, paste_y), mask=sprite)
 

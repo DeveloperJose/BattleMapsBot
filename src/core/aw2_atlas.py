@@ -20,11 +20,11 @@ SPRITE_DIR = Path(config.renderer["sprite_dir"])
 ATLAS_PATH = Path(config.renderer["atlas_path"])
 
 # Regex to filter files:
-# - Must end with .gif
+# - Must end with .gif or .png
 # - Must NOT contain _rain or _snow
 # - Must NOT start with gs_
-VALID_SPRITE_PATTERN = re.compile(r"^(?!gs_).*\.gif$")
-EXCLUDE_WEATHER_PATTERN = re.compile(r"_(rain|snow)\.gif$")
+VALID_SPRITE_PATTERN = re.compile(r"^(?!gs_).*\.(gif|png)$")
+EXCLUDE_WEATHER_PATTERN = re.compile(r"_(rain|snow)\.(gif|png)$")
 
 
 def _should_include_file(filename: str) -> bool:
@@ -37,14 +37,16 @@ def _should_include_file(filename: str) -> bool:
 
 
 def _extract_sprite_name(filename: str) -> Optional[str]:
-    """Extract sprite name from filename (without .gif extension)."""
-    if not filename.endswith(".gif"):
-        return None
-    return filename[:-4]  # Remove .gif extension
+    """Extract sprite name from filename (without extension)."""
+    if filename.endswith(".gif"):
+        return filename[:-4]
+    if filename.endswith(".png"):
+        return filename[:-4]
+    return None
 
 
-def _load_gif_frame(path: Path) -> Optional[np.ndarray]:
-    """Load first frame from GIF file as RGBA numpy array."""
+def _load_image_frame(path: Path) -> Optional[np.ndarray]:
+    """Load first frame from an image file as RGBA numpy array."""
     try:
         with Image.open(path) as img:
             # Convert to RGBA if needed
@@ -91,8 +93,12 @@ def build_atlas(force: bool = False) -> Dict[str, np.ndarray]:
 
     atlas = {}
 
-    for gif_file in sorted(SPRITE_DIR.glob("*.gif")):
-        filename = gif_file.name
+    image_files = sorted(SPRITE_DIR.glob("*.gif")) + sorted(
+        SPRITE_DIR.glob("*.png")
+    )
+
+    for image_file in image_files:
+        filename = image_file.name
 
         if not _should_include_file(filename):
             continue
@@ -101,7 +107,7 @@ def build_atlas(force: bool = False) -> Dict[str, np.ndarray]:
         if sprite_name is None:
             continue
 
-        sprite_data = _load_gif_frame(gif_file)
+        sprite_data = _load_image_frame(image_file)
         if sprite_data is None:
             continue
 
@@ -157,6 +163,12 @@ class SpriteAtlas:
     def __init__(self):
         if self._atlas is None:
             self._atlas = load_atlas()
+
+    def reload(self):
+        """Force-reload the atlas from disk."""
+        logger.info("Reloading sprite atlas from disk...")
+        self._atlas = load_atlas()
+
 
     def get(self, name: str) -> Optional[np.ndarray]:
         """Get sprite by name. Returns None if not found."""

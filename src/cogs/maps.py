@@ -4,6 +4,7 @@ from discord.ext import commands
 import re
 import traceback
 import logging
+import time
 from urllib.parse import quote
 
 from src.core.repository import MapRepository
@@ -15,6 +16,8 @@ from src.utils.awbw_data import (
 from src.utils.map_helpers import format_k, count_properties, count_units
 
 logger = logging.getLogger(__name__)
+MAX_MAP_TILES = 80 * 80
+AUTO_PREVIEW_COOLDOWN_SECONDS = 20
 
 RE_AWL = re.compile(
     r"(?i)https?://(www\.)?awbw\.amarriner\.com/prevmaps\.php\?maps_id=(?P<id>[0-9]+)"
@@ -71,6 +74,7 @@ class Maps(commands.Cog):
         self.bot = bot
         self.repo = MapRepository()
         self.renderer = AW2Renderer()
+        self._auto_preview_last_seen: dict[tuple[int, int], float] = {}
 
     async def cog_unload(self):
         await self.repo.close()
@@ -229,12 +233,18 @@ class Maps(commands.Cog):
     ) -> tuple[discord.Embed, list[discord.File], ui.View] | None:
         try:
             map_data = await self.repo.get_map_data(awbw_id)
+            width = int(map_data.get("size_w", 0))
+            height = int(map_data.get("size_h", 0))
+            if width <= 0 or height <= 0:
+                raise ValueError(f"Invalid map size {width}x{height}")
+            if width * height > MAX_MAP_TILES:
+                raise ValueError(f"Map {awbw_id} too large to render: {width}x{height}")
 
             # Generate AW2 preview image
             _, preview_bytes = self.renderer.render_map(map_data)
 
             # Create filename
-            preview_filename = f"awbw_{awbw_id}.png"
+            preview_filename = f"awbw_{awbw_id}.webp"
 
             # Create file object
             preview_file = discord.File(preview_bytes, filename=preview_filename)
@@ -270,6 +280,13 @@ class Maps(commands.Cog):
             return
         match = RE_AWL.search(message.content)
         if match:
+            now = time.monotonic()
+            channel_id = getattr(message.channel, "id", 0)
+            key = (channel_id, message.author.id)
+            last_seen = self._auto_preview_last_seen.get(key, 0)
+            if now - last_seen < AUTO_PREVIEW_COOLDOWN_SECONDS:
+                return
+            self._auto_preview_last_seen[key] = now
             map_id = int(match.group("id"))
             async with message.channel.typing():
                 result = await self.generate_map_response(map_id)

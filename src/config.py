@@ -38,14 +38,14 @@ class Config:
                 },
                 "cache": {
                     "db_path": "cache/maps.db",
-                    "ttl_hours": 24,
+                    "ttl_seconds": 24 * 60 * 60,
                     "max_size_mb": 250,
                 },
                 "renderer": {
                     "tile_size": 16,
                     "max_prop_extension": 16,
-                    "sprite_dir": "/home/devj/local-arch/code/awbw/public_html/terrain/aw2",
-                    "newseas_dir": "/home/devj/local-arch/code/awbw/public_html/terrain/newseas",
+                    "sprite_dir": "/app/terrain/aw2",
+                    "newseas_dir": "/app/terrain/newseas",
                     "atlas_path": "cache/aw2_atlas.npz",
                     "fallback_color": [255, 0, 255, 255],
                     "image_size": 1024,

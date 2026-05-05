@@ -20,5 +20,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install uv
 RUN pip install uv
 
-# Run the bot, syncing dependencies on startup from the mounted volume
-CMD ["sh", "-c", "uv sync --no-dev && uv run src/main.py"]
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+
+COPY config.yaml ./
+COPY src ./src
+
+CMD ["uv", "run", "--no-sync", "src/main.py"]

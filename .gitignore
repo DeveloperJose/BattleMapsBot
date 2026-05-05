@@ -3,10 +3,12 @@
 .serena
 
 cache/
+*.prof
+renderer.prof
+terrain/
 
 # UV artifacts
 /.venv/
 /venv/
 /.uv/
-uv.lock
 .uv.lock

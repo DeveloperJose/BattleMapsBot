@@ -10,8 +10,8 @@ from src.config import config
 
 logger = logging.getLogger(__name__)
 
-CACHE_TTL_SECONDS = config.cache["ttl_seconds"]
-MAX_CACHE_SIZE_MB = config.cache["max_size_mb"]
+CACHE_TTL_SECONDS = config.cache.get("ttl_seconds", 24 * 60 * 60)
+MAX_CACHE_SIZE_MB = config.cache.get("max_size_mb", 250)
 
 
 class MapRepository:
@@ -22,7 +22,9 @@ class MapRepository:
         self.client = AWBWClient()
 
     def _ensure_dirs(self):
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
 
     def _init_db(self):
         with sqlite3.connect(self.db_path) as conn:
@@ -71,7 +73,7 @@ class MapRepository:
             updated = datetime.fromisoformat(updated_at)
             expiry = updated + timedelta(seconds=CACHE_TTL_SECONDS)
             return datetime.now() > expiry
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return True
 
     def _get_from_db(self, map_id: int) -> Optional[Dict[str, Any]]:

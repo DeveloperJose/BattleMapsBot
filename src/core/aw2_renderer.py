@@ -425,7 +425,38 @@ class AW2Renderer:
                             hp_x = px + TILE_SIZE - hp_w
                             hp_y = py + TILE_SIZE - hp_h
                             paste(hp_sprite, (hp_x, hp_y), mask=hp_sprite)
+                    self._paste_unit_overlays(output, unit, px, py)
         return output
+
+    def _paste_unit_overlays(
+        self,
+        output: Image.Image,
+        unit: dict,
+        px: int,
+        py: int,
+    ) -> None:
+        left_icon = None
+        if unit.get("loaded"):
+            left_icon = "fogload" if unit.get("hidden_cargo") else "load"
+        elif unit.get("capturing"):
+            left_icon = "capture"
+
+        if left_icon:
+            self._paste_overlay(output, left_icon, px, py + 7)
+
+        if unit.get("low_ammo"):
+            self._paste_overlay(output, "aniammo", px + 8, py + 7)
+
+    def _paste_overlay(
+        self,
+        output: Image.Image,
+        sprite_name: str,
+        x: int,
+        y: int,
+    ) -> None:
+        sprite = self._get_sprite_image(sprite_name)
+        if sprite:
+            output.paste(sprite, (x, y), mask=sprite)
 
     def _get_hp_sprite_name(self, hp: Any) -> str | None:
         if hp == "?":

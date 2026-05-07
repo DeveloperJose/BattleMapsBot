@@ -138,6 +138,8 @@ class Maps(commands.Cog):
             f"{preview_links}"
         )
         title = map_data.get("name", f"Game {game_id}" if is_game else f"Map {awbw_id}")
+        if is_game:
+            title = f"Game: {title}"
 
         # Preview embed (AW2 sprites) - primary tab with embedded image
         preview_embed = discord.Embed(

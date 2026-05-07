@@ -20,6 +20,7 @@ def parse_game_page(
 
     buildings_info = _extract_json_assignment(page_html, "buildingsInfo")
     units_info = _extract_json_assignment(page_html, "unitsInfo")
+    generic_units = _extract_json_assignment(page_html, "genericUnits")
     viewer_colors = _extract_json_assignment(page_html, "viewerColors")
 
     map_data = dict(base_map_data)
@@ -38,7 +39,7 @@ def parse_game_page(
     terrain = _copy_terrain(map_data.get("terr", []))
     _overlay_buildings(terrain, width, height, buildings_info)
     map_data["terr"] = terrain
-    map_data["unit"] = _parse_units(units_info)
+    map_data["unit"] = _parse_units(units_info, buildings_info, generic_units)
 
     return map_data
 
@@ -113,7 +114,11 @@ def _set_terrain_at(
         terrain[index] = terrain_id
 
 
-def _parse_units(units_info: dict[str, Any]) -> list[dict[str, Any]]:
+def _parse_units(
+    units_info: dict[str, Any],
+    buildings_info: dict[str, Any],
+    generic_units: dict[str, Any],
+) -> list[dict[str, Any]]:
     units = []
     for unit in units_info.values():
         if not isinstance(unit, dict):
@@ -125,6 +130,9 @@ def _parse_units(units_info: dict[str, Any]) -> list[dict[str, Any]]:
         y = _to_int(unit.get("units_y"), -1)
         if unit_id <= 0 or x < 0 or y < 0:
             continue
+        unit_name = str(unit.get("units_name", ""))
+        cargo1 = unit.get("units_cargo1_units_id", 0)
+        cargo2 = unit.get("units_cargo2_units_id", 0)
         units.append(
             {
                 "id": unit_id,
@@ -132,9 +140,41 @@ def _parse_units(units_info: dict[str, Any]) -> list[dict[str, Any]]:
                 "y": y,
                 "ctry": unit.get("countries_code", ""),
                 "hp": _parse_hp(unit.get("units_hit_points", 10)),
+                "capturing": _is_capturing(unit_name, x, y, buildings_info),
+                "loaded": _has_cargo(cargo1) or _has_cargo(cargo2),
+                "hidden_cargo": cargo1 == "?",
+                "low_ammo": _has_low_ammo(unit, generic_units),
             }
         )
     return units
+
+
+def _is_capturing(
+    unit_name: str, x: int, y: int, buildings_info: dict[str, Any]
+) -> bool:
+    if unit_name.lower() not in {"infantry", "mech"}:
+        return False
+    building = buildings_info.get(str(x), {}).get(str(y))
+    if not isinstance(building, dict):
+        return False
+    return _to_int(building.get("buildings_capture"), 20) < 20
+
+
+def _has_cargo(cargo_id: Any) -> bool:
+    return cargo_id == "?" or _to_int(cargo_id, 0) > 0
+
+
+def _has_low_ammo(unit: dict[str, Any], generic_units: dict[str, Any]) -> bool:
+    unit_name = str(unit.get("units_name", ""))
+    generic_unit = generic_units.get(unit_name)
+    if not isinstance(generic_unit, dict):
+        return False
+
+    full_ammo = _to_int(generic_unit.get("units_ammo"), 0)
+    current_ammo = _to_int(unit.get("units_ammo"), 0)
+    if full_ammo <= 0:
+        return False
+    return current_ammo < ((full_ammo + 1) // 2)
 
 
 def _parse_hp(value: Any) -> int | str:

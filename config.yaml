@@ -42,7 +42,10 @@ renderer:
   # RGBA color used when a sprite is missing [R, G, B, A] (Magenta)
   fallback_color: [255, 0, 255, 255]
   
-  # The fixed width in pixels for the generated map image.
-  # All maps will be resized (nearest-neighbor) to this width.
-  # Height is adjusted automatically to maintain aspect ratio.
+  # Minimum width in pixels for generated map images.
+  # Smaller maps are resized by an integer scale to keep pixel art crisp.
   image_size: 1024
+
+  # Maximum width in pixels for generated map images.
+  # Larger maps are downscaled to this width to keep file size bounded.
+  max_image_size: 2048

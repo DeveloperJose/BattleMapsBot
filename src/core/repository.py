@@ -6,6 +6,7 @@ import logging
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from src.core.awbw import AWBWClient
+from src.core.awbw_game import parse_game_page
 from src.config import config
 
 logger = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ class MapRepository:
             updated = datetime.fromisoformat(updated_at)
             expiry = updated + timedelta(seconds=CACHE_TTL_SECONDS)
             return datetime.now() > expiry
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return True
 
     def _get_from_db(self, map_id: int) -> Optional[Dict[str, Any]]:
@@ -161,6 +162,20 @@ class MapRepository:
         await loop.run_in_executor(None, self._save_to_db, map_id, data)
 
         return data
+
+    async def get_game_data(self, game_id: int) -> Dict[str, Any]:
+        game_html = await self.client.get_game_page(game_id)
+        map_id = self._parse_game_map_id(game_html)
+        base_map_data = await self.get_map_data(map_id)
+        return parse_game_page(game_html, game_id, base_map_data)
+
+    def _parse_game_map_id(self, game_html: str) -> int:
+        import re
+
+        match = re.search(r"const\s+mapId\s*=\s*(\d+)\s*;", game_html)
+        if not match:
+            raise ValueError("Could not find mapId in AWBW game page")
+        return int(match.group(1))
 
     def clear_cache(self, map_id: Optional[int] = None):
         if map_id:

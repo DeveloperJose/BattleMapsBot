@@ -71,3 +71,27 @@ class AWBWClient:
                 raise
             finally:
                 BotStats().record_api_request(time.time() - start_time)
+
+    async def get_game_page(self, game_id: int) -> str:
+        """Fetches the public AWBW game page HTML with rate limiting."""
+        session = await self.get_session()
+
+        async with self._limiter:
+            start_time = time.time()
+            try:
+                logger.info(f"Fetching game {game_id} page from AWBW...")
+                async with session.get(
+                    "https://awbw.amarriner.com/game.php",
+                    params={"games_id": game_id},
+                    headers={"User-Agent": "BattleMapsBot/1.0"},
+                ) as response:
+                    if response.status != 200:
+                        raise ConnectionError(
+                            f"AWBW game page returned status {response.status}"
+                        )
+                    return await response.text()
+            except aiohttp.ClientError as e:
+                logger.error(f"Network error fetching game {game_id}: {e}")
+                raise
+            finally:
+                BotStats().record_api_request(time.time() - start_time)

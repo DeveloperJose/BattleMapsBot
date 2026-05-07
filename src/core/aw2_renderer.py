@@ -5,6 +5,7 @@ Simple approach: terrain only, no units, no shadows, no neighbor variants.
 """
 
 import io
+import math
 import time
 import numpy as np
 from PIL import Image
@@ -95,7 +96,7 @@ class AW2Renderer:
 
     def _get_sea_sprite_name(self, x: int, y: int, terrain_ids: np.ndarray) -> str:
         """Get the numbered sea sprite based on neighbor bitmask.
-        
+
         Matches the logic from map_renderer.js getSea() method.
         Uses newseas sprites: sea0 through sea255.
         """
@@ -109,13 +110,13 @@ class AW2Renderer:
         total = 0
         border = [
             (x - 1, y - 1),  # NW (k=0)
-            (x, y - 1),      # N (k=1)
+            (x, y - 1),  # N (k=1)
             (x + 1, y - 1),  # NE (k=2)
-            (x + 1, y),      # E (k=3)
+            (x + 1, y),  # E (k=3)
             (x + 1, y + 1),  # SE (k=4)
-            (x, y + 1),      # S (k=5)
+            (x, y + 1),  # S (k=5)
             (x - 1, y + 1),  # SW (k=6)
-            (x - 1, y),      # W (k=7)
+            (x - 1, y),  # W (k=7)
         ]
 
         for k, (bx, by) in enumerate(border):
@@ -222,13 +223,7 @@ class AW2Renderer:
 
             img = self._render(terrain_ids, map_data.get("unit", []), width, height)
 
-            target_w = config.renderer.get("image_size", 1000)
-            img_w, img_h = img.size
-
-            if img_w != target_w and img_w > 0:
-                scale = target_w / img_w
-                new_h = int(img_h * scale)
-                img = img.resize((target_w, new_h), resample=Image.Resampling.NEAREST)
+            img = self._resize_output(img)
 
             out = io.BytesIO()
             img.save(out, format="WEBP", lossless=True)
@@ -236,8 +231,33 @@ class AW2Renderer:
 
             return False, out
         finally:
-            map_id = map_data.get("id", 0)
-            BotStats().record_render(time.time() - start_time, map_id)
+            duration = time.time() - start_time
+            stats = BotStats()
+            if map_data.get("source") == "game":
+                stats.record_game_render(duration, map_data.get("game_id", 0))
+            else:
+                stats.record_render(duration, map_data.get("id", 0))
+
+    def _resize_output(self, img: Image.Image) -> Image.Image:
+        min_w = int(config.renderer.get("image_size", 1000))
+        max_w = int(config.renderer.get("max_image_size", 2048))
+        img_w, img_h = img.size
+
+        if img_w <= 0:
+            return img
+
+        if img_w < min_w:
+            scale = max(1, math.ceil(min_w / img_w))
+            target_w = img_w * scale
+            target_h = img_h * scale
+        elif img_w > max_w:
+            scale = max_w / img_w
+            target_w = max_w
+            target_h = int(img_h * scale)
+        else:
+            return img
+
+        return img.resize((target_w, target_h), resample=Image.Resampling.NEAREST)
 
     def _render(
         self,
@@ -397,12 +417,23 @@ class AW2Renderer:
                     )
                     paste(unit_sprite, (px, paste_y), mask=unit_sprite)
 
-                    hp = int(unit.get("hp", 10))
-                    if 1 <= hp <= 9:
-                        hp_sprite = self._get_sprite_image(str(hp))
+                    hp_sprite_name = self._get_hp_sprite_name(unit.get("hp", 10))
+                    if hp_sprite_name:
+                        hp_sprite = self._get_sprite_image(hp_sprite_name)
                         if hp_sprite:
                             hp_w, hp_h = hp_sprite.size
                             hp_x = px + TILE_SIZE - hp_w
                             hp_y = py + TILE_SIZE - hp_h
                             paste(hp_sprite, (hp_x, hp_y), mask=hp_sprite)
         return output
+
+    def _get_hp_sprite_name(self, hp: Any) -> str | None:
+        if hp == "?":
+            return "qhp"
+        try:
+            hp_value = int(hp)
+        except TypeError, ValueError:
+            return None
+        if 1 <= hp_value <= 9:
+            return str(hp_value)
+        return None

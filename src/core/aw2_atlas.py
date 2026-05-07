@@ -133,18 +133,18 @@ def build_atlas(force: bool = False) -> Dict[str, np.ndarray]:
             filename = image_file.name
             if not NEWSEAS_PATTERN.match(filename):
                 continue
-            
+
             sprite_name = _extract_sprite_name(filename)
             if sprite_name is None:
                 continue
-            
+
             sprite_data = _load_image_frame(image_file)
             if sprite_data is None:
                 continue
-            
+
             if len(sprite_data.shape) != 3 or sprite_data.shape[2] != 4:
                 continue
-            
+
             atlas[sprite_name] = sprite_data
             logger.debug(f"Added newseas: {sprite_name}")
 
@@ -180,7 +180,11 @@ def _validate_atlas(atlas: Dict[str, np.ndarray], source: str) -> None:
     """Fail fast when sprite assets are missing instead of rendering magenta maps."""
     missing = [name for name in REQUIRED_SPRITES if name not in atlas]
     if not atlas or missing:
-        details = f"missing required sprites: {', '.join(missing)}" if missing else "empty atlas"
+        details = (
+            f"missing required sprites: {', '.join(missing)}"
+            if missing
+            else "empty atlas"
+        )
         raise RuntimeError(f"Invalid sprite atlas ({source}): {details}")
 
 

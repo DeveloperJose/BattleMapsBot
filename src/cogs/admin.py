@@ -154,6 +154,8 @@ class Admin(commands.Cog):
             bot_stats = BotStats()
             api_stats = bot_stats.get_api_stats()
             render_stats = bot_stats.get_render_stats()
+            game_render_stats = bot_stats.get_game_render_stats()
+            game_generation_stats = bot_stats.get_game_generation_stats()
 
             # System info
             python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
@@ -174,6 +176,22 @@ class Admin(commands.Cog):
                 longest_render_str = f"{render_stats['longest'] * 1000:.1f} ms (Map ID: {longest_render_map_id})"
             else:
                 longest_render_str = f"{render_stats['longest'] * 1000:.1f} ms"
+
+            longest_render_game_id = game_render_stats.get("longest_game_id", 0)
+            if longest_render_game_id:
+                longest_game_render_str = f"{game_render_stats['longest'] * 1000:.1f} ms (Game ID: {longest_render_game_id})"
+            else:
+                longest_game_render_str = (
+                    f"{game_render_stats['longest'] * 1000:.1f} ms"
+                )
+
+            longest_generation_game_id = game_generation_stats.get("longest_game_id", 0)
+            if longest_generation_game_id:
+                longest_game_generation_str = f"{game_generation_stats['longest'] * 1000:.1f} ms (Game ID: {longest_generation_game_id})"
+            else:
+                longest_game_generation_str = (
+                    f"{game_generation_stats['longest'] * 1000:.1f} ms"
+                )
 
             msg = (
                 f"**🤖 Bot Statistics**\n"
@@ -207,12 +225,26 @@ class Admin(commands.Cog):
                 f"Avg Duration:     {api_stats['average'] * 1000:.1f} ms\n"
                 f"Longest Req:      {api_stats['longest'] * 1000:.1f} ms\n"
                 f"```\n"
-                f"**🎨 Render Statistics**\n"
+                f"**🎨 Map Render Statistics**\n"
                 f"```\n"
                 f"Total Renders:    {render_stats['count']}\n"
                 f"Total Time:       {render_stats['total_time']:.2f} s\n"
                 f"Avg Render:       {render_stats['average'] * 1000:.1f} ms\n"
                 f"Longest Render:   {longest_render_str}\n"
+                f"```\n"
+                f"**🎮 Game Render Statistics**\n"
+                f"```\n"
+                f"Total Renders:    {game_render_stats['count']}\n"
+                f"Total Time:       {game_render_stats['total_time']:.2f} s\n"
+                f"Avg Render:       {game_render_stats['average'] * 1000:.1f} ms\n"
+                f"Longest Render:   {longest_game_render_str}\n"
+                f"```\n"
+                f"**⏱️ Game Generation Statistics**\n"
+                f"```\n"
+                f"Total Generated:  {game_generation_stats['count']}\n"
+                f"Total Time:       {game_generation_stats['total_time']:.2f} s\n"
+                f"Avg Generation:   {game_generation_stats['average'] * 1000:.1f} ms\n"
+                f"Longest Gen:      {longest_game_generation_str}\n"
                 f"```"
             )
 

@@ -30,6 +30,18 @@ class BotStats:
         self.render_longest_time = 0.0
         self.render_longest_map_id = 0
 
+        # Game Render Stats
+        self.game_render_count = 0
+        self.game_render_total_time = 0.0
+        self.game_render_longest_time = 0.0
+        self.game_render_longest_game_id = 0
+
+        # Full Game Preview Generation Stats
+        self.game_generation_count = 0
+        self.game_generation_total_time = 0.0
+        self.game_generation_longest_time = 0.0
+        self.game_generation_longest_game_id = 0
+
     def record_api_request(self, duration: float):
         now = time.time()
         self.api_total_count += 1
@@ -45,6 +57,20 @@ class BotStats:
         if duration > self.render_longest_time:
             self.render_longest_time = duration
             self.render_longest_map_id = map_id
+
+    def record_game_render(self, duration: float, game_id: int):
+        self.game_render_count += 1
+        self.game_render_total_time += duration
+        if duration > self.game_render_longest_time:
+            self.game_render_longest_time = duration
+            self.game_render_longest_game_id = game_id
+
+    def record_game_generation(self, duration: float, game_id: int):
+        self.game_generation_count += 1
+        self.game_generation_total_time += duration
+        if duration > self.game_generation_longest_time:
+            self.game_generation_longest_time = duration
+            self.game_generation_longest_game_id = game_id
 
     def _prune_timestamps(self):
         # Remove timestamps older than 24 hours
@@ -94,4 +120,32 @@ class BotStats:
             "average": avg,
             "count": self.render_count,
             "longest_map_id": self.render_longest_map_id,
+        }
+
+    def get_game_render_stats(self) -> Dict[str, Any]:
+        avg = (
+            self.game_render_total_time / self.game_render_count
+            if self.game_render_count > 0
+            else 0
+        )
+        return {
+            "total_time": self.game_render_total_time,
+            "longest": self.game_render_longest_time,
+            "average": avg,
+            "count": self.game_render_count,
+            "longest_game_id": self.game_render_longest_game_id,
+        }
+
+    def get_game_generation_stats(self) -> Dict[str, Any]:
+        avg = (
+            self.game_generation_total_time / self.game_generation_count
+            if self.game_generation_count > 0
+            else 0
+        )
+        return {
+            "total_time": self.game_generation_total_time,
+            "longest": self.game_generation_longest_time,
+            "average": avg,
+            "count": self.game_generation_count,
+            "longest_game_id": self.game_generation_longest_game_id,
         }

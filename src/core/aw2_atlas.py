@@ -29,6 +29,7 @@ EXCLUDE_WEATHER_PATTERN = re.compile(r"_(rain|snow)\.(gif|png)$")
 
 # Regex for newseas sprites - include all sea*.png files
 NEWSEAS_PATTERN = re.compile(r"^sea\d+\.png$")
+REQUIRED_SPRITES = ("plain", "sea0")
 
 
 def _should_include_file(filename: str) -> bool:
@@ -147,6 +148,8 @@ def build_atlas(force: bool = False) -> Dict[str, np.ndarray]:
             atlas[sprite_name] = sprite_data
             logger.debug(f"Added newseas: {sprite_name}")
 
+    _validate_atlas(atlas, f"built from {SPRITE_DIR}")
+
     logger.info(f"Built atlas with {len(atlas)} sprites")
 
     # Save to compressed NPZ
@@ -168,8 +171,17 @@ def load_atlas() -> Dict[str, np.ndarray]:
 
     data = np.load(ATLAS_PATH)
     atlas = {key: data[key] for key in data.files}
+    _validate_atlas(atlas, str(ATLAS_PATH))
     logger.info(f"Loaded {len(atlas)} sprites from atlas")
     return atlas
+
+
+def _validate_atlas(atlas: Dict[str, np.ndarray], source: str) -> None:
+    """Fail fast when sprite assets are missing instead of rendering magenta maps."""
+    missing = [name for name in REQUIRED_SPRITES if name not in atlas]
+    if not atlas or missing:
+        details = f"missing required sprites: {', '.join(missing)}" if missing else "empty atlas"
+        raise RuntimeError(f"Invalid sprite atlas ({source}): {details}")
 
 
 class SpriteAtlas:

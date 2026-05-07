@@ -117,12 +117,12 @@ TERRAIN_ID_TO_SPRITE = {
     114: "vpipeseam",
     115: "hpiperubble",
     116: "vpiperubble",
-    # Amber Blossom Buildings
-    117: "amberblossomairport",
-    118: "amberblossombase",
-    119: "amberblossomcity",
-    120: "amberblossomhq",
-    121: "amberblossomport",
+    # Amber Blaze Buildings
+    117: "amberblazeairport",
+    118: "amberblazebase",
+    119: "amberblazecity",
+    120: "amberblazehq",
+    121: "amberblazeport",
     # Jade Sun Buildings
     122: "jadesunairport",
     123: "jadesunbase",
@@ -130,7 +130,7 @@ TERRAIN_ID_TO_SPRITE = {
     125: "jadesunhq",
     126: "jadesunport",
     # Command Towers
-    127: "amberblossomcomtower",
+    127: "amberblazecomtower",
     128: "blackholecomtower",
     129: "bluemooncomtower",
     130: "browndesertcomtower",
@@ -142,7 +142,7 @@ TERRAIN_ID_TO_SPRITE = {
     136: "yellowcometcomtower",
     137: "greyskycomtower",
     # Labs
-    138: "amberblossomlab",
+    138: "amberblazelab",
     139: "blackholelab",
     140: "bluemoonlab",
     141: "browndesertlab",

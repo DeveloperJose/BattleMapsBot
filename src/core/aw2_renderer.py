@@ -20,18 +20,9 @@ from src.core.aw2_data import (
     RIVER_EHC,
     RIVER_WHC,
     RIVER_NVC,
-    LAND_IDS,
     SEA_ID,
     SHOAL_IDS,
     PROPERTY_IDS,
-)
-from src.core.aw2_sea_data import (
-    SEA_MASK_TO_SPRITE,
-    RIVER_CONNECT_N,
-    RIVER_CONNECT_W,
-    RIVER_CONNECT_S,
-    RIVER_CONNECT_E,
-    SEA_WATER_IDS,
 )
 from src.core.stats import BotStats
 from src.utils.data.element_id import AWBW_COUNTRY_CODE, AWBW_UNIT_CODE

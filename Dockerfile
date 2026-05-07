@@ -24,6 +24,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 COPY config.yaml ./
+COPY cache/aw2_atlas.npz ./cache/aw2_atlas.npz
 COPY src ./src
 
 CMD ["uv", "run", "--no-sync", "python", "-m", "src.main"]

@@ -26,4 +26,4 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY config.yaml ./
 COPY src ./src
 
-CMD ["uv", "run", "--no-sync", "src/main.py"]
+CMD ["uv", "run", "--no-sync", "python", "-m", "src.main"]

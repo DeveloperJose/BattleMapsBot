@@ -10,10 +10,7 @@ from urllib.parse import quote
 from src.core.repository import MapRepository
 from src.core.aw2_renderer import AW2Renderer
 from src.core.stats import BotStats
-from src.utils.awbw_data import (
-    UNIT_NAMES,
-    CTRY_NAMES,
-)
+from src.utils.awbw_data import CTRY_NAMES
 from src.utils.map_helpers import format_k, count_properties, count_units
 
 logger = logging.getLogger(__name__)
@@ -52,15 +49,6 @@ class TabbedMapView(ui.View):
     async def tab_properties(self, interaction: discord.Interaction, button: ui.Button):
         await self.update_tab(interaction, button, "properties")
 
-    @ui.button(
-        label="Predeployed",
-        emoji="🎖️",
-        style=discord.ButtonStyle.secondary,
-        custom_id="map_tab_units",
-    )
-    async def tab_units(self, interaction: discord.Interaction, button: ui.Button):
-        await self.update_tab(interaction, button, "units")
-
     async def update_tab(
         self, interaction: discord.Interaction, button: ui.Button, tab_name: str
     ):
@@ -95,11 +83,17 @@ class Maps(commands.Cog):
             else f"https://awbw.amarriner.com/prevmaps.php?maps_id={awbw_id}"
         )
 
-        author_label = "Game Creator" if is_game else "Author"
-        if author == "[Unknown]":
-            author_line = f"**{author_label}:** [Unknown]"
+        if is_game:
+            map_name = map_data.get("map_name", "Unknown")
+            if author == "[Unknown]":
+                map_line = f"**Map:** {map_name} by [Unknown]"
+            else:
+                map_line = f"**Map:** {map_name} by [{author}]({author_url})"
         else:
-            author_line = f"**{author_label}:** [{author}]({author_url})"
+            if author == "[Unknown]":
+                author_line = "**Map Author:** [Unknown]"
+            else:
+                author_line = f"**Map Author:** [{author}]({author_url})"
 
         if is_game:
             preview_links = (
@@ -133,13 +127,22 @@ class Maps(commands.Cog):
             else f"**Published:** {published}"
         )
 
-        header_desc = (
-            f"{author_line} ・ **Players:** {active_players} ・ **Size:** {size_w}x{size_h} ・ {timing}\n"
-            f"{preview_links}"
-        )
+        if is_game:
+            header_desc = (
+                f"{map_line}\n"
+                f"**Players:** {active_players} ・ **Size:** {size_w}x{size_h} ・ {timing}\n"
+                f"{preview_links}"
+            )
+        else:
+            header_desc = (
+                f"{author_line} ・ **Players:** {active_players} ・ **Size:** {size_w}x{size_h} ・ {timing}\n"
+                f"{preview_links}"
+            )
         title = map_data.get("name", f"Game {game_id}" if is_game else f"Map {awbw_id}")
         if is_game:
-            title = f"Game: {title}"
+            title = f"[Game] {title}"
+        else:
+            title = f"[Map] {title}"
 
         # Preview embed (AW2 sprites) - primary tab with embedded image
         preview_embed = discord.Embed(
@@ -154,11 +157,6 @@ class Maps(commands.Cog):
                 title=title,
                 url=source_url,
                 description=f"{header_desc}\n\nNo properties found on this map.",
-            )
-            unit_embed = discord.Embed(
-                title=title,
-                url=source_url,
-                description=f"{header_desc}\n\nNo units found on this map.",
             )
         else:
             total_props_all = sum(sum(c.values()) for c in prop_counts.values())
@@ -194,12 +192,6 @@ class Maps(commands.Cog):
                 description=stats_desc,
             )
 
-            unit_embed = discord.Embed(
-                title=title,
-                url=source_url,
-                description=header_desc,
-            )
-
             for ctry_id in active_ctries:
                 name = CTRY_NAMES.get(ctry_id, f"Country {ctry_id}")
                 props = prop_counts.get(ctry_id, {})
@@ -212,7 +204,6 @@ class Maps(commands.Cog):
                 lab = props.get(107, 0)
                 inc = format_k(income.get(ctry_id, 0))
 
-                # Build dot-separated property list
                 prop_parts = []
                 if hq > 0:
                     prop_parts.append(f"**HQ:** {hq}")
@@ -237,24 +228,7 @@ class Maps(commands.Cog):
                     inline=False,
                 )
 
-            for ctry_id in active_ctries:
-                if ctry_id == 0:
-                    continue
-                name = CTRY_NAMES.get(ctry_id, f"Country {ctry_id}")
-                units = unit_counts.get(ctry_id, {})
-                if not units:
-                    unit_embed.add_field(name=name, value="—", inline=False)
-                else:
-                    # Build dot-separated unit list
-                    unit_parts = [
-                        f"**{UNIT_NAMES.get(uid, f'Unit{uid}')}:** {count}"
-                        for uid, count in sorted(units.items())
-                    ]
-                    unit_embed.add_field(
-                        name=name, value=" ・ ".join(unit_parts), inline=False
-                    )
-
-        return {"preview": preview_embed, "properties": prop_embed, "units": unit_embed}
+        return {"preview": preview_embed, "properties": prop_embed}
 
     async def generate_map_response(
         self, awbw_id: int

@@ -22,7 +22,6 @@ def parse_game_page(
     units_info = _extract_json_assignment(page_html, "unitsInfo")
     generic_units = _extract_json_assignment(page_html, "genericUnits")
     viewer_colors = _extract_json_assignment(page_html, "viewerColors")
-
     map_data = dict(base_map_data)
     map_data["source"] = "game"
     map_data["id"] = map_id
@@ -35,6 +34,7 @@ def parse_game_page(
     map_data["name"] = _extract_game_title(page_html) or map_data.get(
         "name", f"Game {game_id}"
     )
+    map_data["map_name"] = base_map_data.get("name", "Unknown")
 
     terrain = _copy_terrain(map_data.get("terr", []))
     _overlay_buildings(terrain, width, height, buildings_info)

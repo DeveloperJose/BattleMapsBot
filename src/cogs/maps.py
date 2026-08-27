@@ -20,9 +20,6 @@ AUTO_PREVIEW_COOLDOWN_SECONDS = 20
 RE_AWL = re.compile(
     r"(?i)https?://(www\.)?awbw\.amarriner\.com/prevmaps\.php\?maps_id=(?P<id>[0-9]+)"
 )
-RE_GAME = re.compile(
-    r"(?i)https?://(www\.)?awbw\.amarriner\.com/game\.php\?games_id=(?P<id>[0-9]+)"
-)
 
 
 class TabbedMapView(ui.View):
@@ -310,23 +307,17 @@ class Maps(commands.Cog):
     @app_commands.command(name="game", description="Preview an active AWBW game")
     @app_commands.describe(game_id="The ID of the AWBW game")
     async def game_preview(self, interaction: discord.Interaction, game_id: int):
-        await interaction.response.defer()
-        result = await self.generate_game_response(game_id)
-        if result:
-            embed, files, view = result
-            await interaction.followup.send(embed=embed, files=files, view=view)
-        else:
-            await interaction.followup.send(
-                f"Error loading game ID {game_id}. Please check if the game is public."
-            )
+        await interaction.response.send_message(
+            "Game previews are temporarily disabled. Map previews are still available.",
+            ephemeral=True,
+        )
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot:
             return
         match = RE_AWL.search(message.content)
-        game_match = RE_GAME.search(message.content)
-        if match or game_match:
+        if match:
             now = time.monotonic()
             channel_id = getattr(message.channel, "id", 0)
             key = (channel_id, message.author.id)
@@ -334,13 +325,9 @@ class Maps(commands.Cog):
             if now - last_seen < AUTO_PREVIEW_COOLDOWN_SECONDS:
                 return
             self._auto_preview_last_seen[key] = now
-            preview_id = int((match or game_match).group("id"))
+            preview_id = int(match.group("id"))
             async with message.channel.typing():
-                result = (
-                    await self.generate_map_response(preview_id)
-                    if match
-                    else await self.generate_game_response(preview_id)
-                )
+                result = await self.generate_map_response(preview_id)
                 if result:
                     embed, files, view = result
                     await message.reply(

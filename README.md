@@ -43,3 +43,9 @@ The bot requires the following permissions in the server/channel to function:
 *   **Attach Files**
 
 If the bot doesn't respond to links, check that it has both **View Channels** and **Send Messages** permissions in the channel.
+
+## Persistent statistics
+
+API request totals, render/generation counts, duration averages and records, and rolling API windows are saved to SQLite after each event. Set `STATS_DB_PATH` to override the default `data/stats.db`. Docker Compose bind-mounts this directory from `apps/battlemaps-bot/data`, preserving statistics through restarts, rebuilds, and container replacement. Existing Restic backups include this directory under `/data/website`.
+
+Totals cover all recorded runs; uptime remains the current process uptime. Historical in-memory counters from before persistence was deployed cannot be recovered. API timestamps older than 24 hours are pruned; lifetime totals are retained.

@@ -12,3 +12,6 @@ terrain/
 /venv/
 /.uv/
 .uv.lock
+
+# Persistent runtime telemetry
+data/

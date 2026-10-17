@@ -1,151 +1,133 @@
+import sqlite3
 import time
-from collections import deque
-import logging
-from typing import Dict, Any
+from contextlib import closing
+from pathlib import Path
+from typing import Any, Dict
 
-logger = logging.getLogger(__name__)
+from src.config import STATS_DB_PATH
 
 
 class BotStats:
+    """Durable totals and rolling API counts, committed after every event."""
+
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(BotStats, cls).__new__(cls)
-            cls._instance._init_stats()
+            instance = super().__new__(cls)
+            instance._init_stats()
+            cls._instance = instance
         return cls._instance
 
-    def _init_stats(self):
+    def _init_stats(self) -> None:
         self.start_time = time.time()
+        self.db_path = Path(STATS_DB_PATH)
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        with closing(self._connect()) as conn, conn:
+            conn.executescript("""
+                CREATE TABLE IF NOT EXISTS counters (
+                    kind TEXT PRIMARY KEY,
+                    count INTEGER NOT NULL DEFAULT 0,
+                    total_time REAL NOT NULL DEFAULT 0,
+                    longest REAL NOT NULL DEFAULT 0,
+                    longest_id INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE TABLE IF NOT EXISTS api_requests (
+                    timestamp REAL NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS api_requests_timestamp
+                    ON api_requests(timestamp);
+            """)
+            conn.execute(
+                "DELETE FROM api_requests WHERE timestamp < ?", (time.time() - 86400,)
+            )
 
-        # API Stats
-        self.api_total_count = 0
-        self.api_total_duration = 0.0
-        self.api_longest_duration = 0.0
-        self.api_timestamps = deque()  # Store timestamps for time-window counts
+    def _connect(self) -> sqlite3.Connection:
+        return sqlite3.connect(self.db_path, timeout=10)
 
-        # Render Stats
-        self.render_count = 0
-        self.render_total_time = 0.0
-        self.render_longest_time = 0.0
-        self.render_longest_map_id = 0
+    def _record(self, kind: str, duration: float, item_id: int = 0) -> None:
+        with closing(self._connect()) as conn, conn:
+            conn.execute(
+                """
+                INSERT INTO counters (kind, count, total_time, longest, longest_id)
+                VALUES (?, 1, ?, ?, ?)
+                ON CONFLICT(kind) DO UPDATE SET
+                    count = count + 1,
+                    total_time = total_time + excluded.total_time,
+                    longest_id = CASE WHEN excluded.longest > longest
+                        THEN excluded.longest_id ELSE longest_id END,
+                    longest = MAX(longest, excluded.longest)
+                """,
+                (kind, duration, duration, item_id),
+            )
+            if kind == "api":
+                now = time.time()
+                conn.execute("INSERT INTO api_requests VALUES (?)", (now,))
+                conn.execute(
+                    "DELETE FROM api_requests WHERE timestamp < ?", (now - 86400,)
+                )
 
-        # Game Render Stats
-        self.game_render_count = 0
-        self.game_render_total_time = 0.0
-        self.game_render_longest_time = 0.0
-        self.game_render_longest_game_id = 0
+    def record_api_request(self, duration: float) -> None:
+        self._record("api", duration)
 
-        # Full Game Preview Generation Stats
-        self.game_generation_count = 0
-        self.game_generation_total_time = 0.0
-        self.game_generation_longest_time = 0.0
-        self.game_generation_longest_game_id = 0
+    def record_render(self, duration: float, map_id: int) -> None:
+        self._record("render", duration, map_id)
 
-    def record_api_request(self, duration: float):
-        now = time.time()
-        self.api_total_count += 1
-        self.api_total_duration += duration
-        if duration > self.api_longest_duration:
-            self.api_longest_duration = duration
-        self.api_timestamps.append(now)
-        self._prune_timestamps()
+    def record_game_render(self, duration: float, game_id: int) -> None:
+        self._record("game_render", duration, game_id)
 
-    def record_render(self, duration: float, map_id: int):
-        self.render_count += 1
-        self.render_total_time += duration
-        if duration > self.render_longest_time:
-            self.render_longest_time = duration
-            self.render_longest_map_id = map_id
+    def record_game_generation(self, duration: float, game_id: int) -> None:
+        self._record("game_generation", duration, game_id)
 
-    def record_game_render(self, duration: float, game_id: int):
-        self.game_render_count += 1
-        self.game_render_total_time += duration
-        if duration > self.game_render_longest_time:
-            self.game_render_longest_time = duration
-            self.game_render_longest_game_id = game_id
-
-    def record_game_generation(self, duration: float, game_id: int):
-        self.game_generation_count += 1
-        self.game_generation_total_time += duration
-        if duration > self.game_generation_longest_time:
-            self.game_generation_longest_time = duration
-            self.game_generation_longest_game_id = game_id
-
-    def _prune_timestamps(self):
-        # Remove timestamps older than 24 hours
-        cutoff = time.time() - 86400
-        while self.api_timestamps and self.api_timestamps[0] < cutoff:
-            self.api_timestamps.popleft()
+    def _get_stats(self, kind: str) -> Dict[str, Any]:
+        with closing(self._connect()) as conn:
+            row = conn.execute(
+                "SELECT count, total_time, longest, longest_id FROM counters WHERE kind = ?",
+                (kind,),
+            ).fetchone()
+        count, total_time, longest, longest_id = row or (0, 0.0, 0.0, 0)
+        return {
+            "count": count,
+            "total_time": total_time,
+            "longest": longest,
+            "average": total_time / count if count else 0,
+            "longest_id": longest_id,
+        }
 
     def get_api_stats(self) -> Dict[str, Any]:
-        self._prune_timestamps()
+        stats = self._get_stats("api")
         now = time.time()
-        one_min = now - 60
-        one_hour = now - 3600
-
-        count_24h = len(self.api_timestamps)
-        count_1h = 0
-        count_1m = 0
-
-        # Iterate backwards since it's sorted
-        for ts in reversed(self.api_timestamps):
-            if ts > one_min:
-                count_1m += 1
-            if ts > one_hour:
-                count_1h += 1
-            else:
-                break
-
-        avg_time = (
-            self.api_total_duration / self.api_total_count
-            if self.api_total_count > 0
-            else 0
-        )
-
+        with closing(self._connect()) as conn:
+            windows = conn.execute(
+                """
+                SELECT COUNT(*), COALESCE(SUM(timestamp > ?), 0),
+                    COALESCE(SUM(timestamp > ?), 0)
+                FROM api_requests WHERE timestamp >= ?
+                """,
+                (now - 3600, now - 60, now - 86400),
+            ).fetchone()
         return {
-            "longest": self.api_longest_duration,
-            "average": avg_time,
-            "total_uptime": self.api_total_count,
-            "total_1m": count_1m,
-            "total_1h": count_1h,
-            "total_24h": count_24h,
+            "longest": stats["longest"],
+            "average": stats["average"],
+            # Retain the old key for compatibility with existing callers.
+            "total_uptime": stats["count"],
+            "total_all_time": stats["count"],
+            "total_24h": windows[0],
+            "total_1h": windows[1],
+            "total_1m": windows[2],
         }
 
     def get_render_stats(self) -> Dict[str, Any]:
-        avg = self.render_total_time / self.render_count if self.render_count > 0 else 0
-        return {
-            "total_time": self.render_total_time,
-            "longest": self.render_longest_time,
-            "average": avg,
-            "count": self.render_count,
-            "longest_map_id": self.render_longest_map_id,
-        }
+        stats = self._get_stats("render")
+        stats["longest_map_id"] = stats.pop("longest_id")
+        return stats
 
     def get_game_render_stats(self) -> Dict[str, Any]:
-        avg = (
-            self.game_render_total_time / self.game_render_count
-            if self.game_render_count > 0
-            else 0
-        )
-        return {
-            "total_time": self.game_render_total_time,
-            "longest": self.game_render_longest_time,
-            "average": avg,
-            "count": self.game_render_count,
-            "longest_game_id": self.game_render_longest_game_id,
-        }
+        stats = self._get_stats("game_render")
+        stats["longest_game_id"] = stats.pop("longest_id")
+        return stats
 
     def get_game_generation_stats(self) -> Dict[str, Any]:
-        avg = (
-            self.game_generation_total_time / self.game_generation_count
-            if self.game_generation_count > 0
-            else 0
-        )
-        return {
-            "total_time": self.game_generation_total_time,
-            "longest": self.game_generation_longest_time,
-            "average": avg,
-            "count": self.game_generation_count,
-            "longest_game_id": self.game_generation_longest_game_id,
-        }
+        stats = self._get_stats("game_generation")
+        stats["longest_game_id"] = stats.pop("longest_id")
+        return stats

@@ -28,7 +28,7 @@ Browser extension by **saltor (kbuzsaki)** with Moveplanner Plus, damage calcula
 
 ### AWBW Replay Player
 
-A desktop player for AWBW replays.
+Downloads and plays completed AWBW replays on your computer. It saves replays locally, highlights actions with custom animations, and lets you change player countries and unit facing directions.
 
 **Author:** DeamonHunter
 
@@ -38,7 +38,7 @@ A desktop player for AWBW replays.
 
 ### Replay parser
 
-Tools for parsing AWBW replays.
+A Python package for opening replay archives and stepping through actions and game states. Use it to analyze players, units, buildings, and funds; the project also provides an interactive Colab notebook.
 
 **Author:** Tarkan Al-Kazily
 
@@ -48,7 +48,7 @@ Tools for parsing AWBW replays.
 
 ### AWBW Stats
 
-Enhanced statistics for AWBW games.
+Adds a Stats button and graphs for two-player games. The author recommends completed games or ongoing standard and high funds games. Available as a browser extension or userscript.
 
 **Author:** zielinskigr
 
@@ -58,7 +58,7 @@ Enhanced statistics for AWBW games.
 
 ### ELO history plotter
 
-Plots a player’s rating history; configure the username and scraping options in the script.
+Scrapes and plots a player’s rating history. The latest archived script can include an alternate account and find rivals; set the username and enable scraping on the first run.
 
 **Author:** Ekkehard8
 
@@ -78,7 +78,7 @@ Shows live graphs for unit count, income, army value, value per unit, and CO pow
 
 ### AWBW Stats charts
 
-Adds enhanced statistics charts for AWBW.
+The userscript edition of AWBW Stats adds a Stats button and graphs for two-player games. The author recommends completed games or ongoing standard and high funds games.
 
 **Author:** zielinskigr
 
@@ -120,7 +120,7 @@ Adds automatic replay playback with play and pause controls.
 
 ### AWBW Map Analyzer
 
-Analyzes AWBW maps.
+Analyzes maps and shows tank movement in the map editor and map preview.
 
 **Author:** Vesper | ShinyDeagle
 
@@ -160,9 +160,9 @@ Adds a move planner button to the game list.
 
 ### AWBW Map Generator
 
-A community map generator.
+Generates a mirrored competitive map layout using configurable map size, bases, properties, and terrain. Original code is by Ilese (NQ BN), republished with permission by Rorolina-Frixell.
 
-**Author:** Rorolina-Frixell
+**Author:** Ilese (NQ BN); published by Rorolina-Frixell
 
 **Shared:** 2023-02-22
 
@@ -170,7 +170,7 @@ A community map generator.
 
 ### AI Map Generator
 
-Generates and edits AWBW maps locally using an included model.
+Generates map drafts and fills selected parts of existing maps using an included model running locally. Maps can be imported, edited, and exported; generation works offline after installation.
 
 **Author:** npiriou
 
@@ -202,7 +202,7 @@ A community userscript for the damage calculator.
 
 ### Advanced Hotkeys
 
-Adds keyboard controls for AWBW.
+Adds rebindable hotkeys for AWBW actions, configured through a Hotkey button in the game menu.
 
 **Author:** Incinerate
 
@@ -254,7 +254,7 @@ Shows balanced property counts, communications towers, units, and days.
 
 Disables selected units in the build menu. Archived version 0.2.
 
-**Author:** steve
+**Authors:** steve and DevJ
 
 **Shared:** 2025-06-05
 
@@ -348,7 +348,7 @@ Displays CO power charge values as rounded integers.
 
 ### Timer warning sounds
 
-Adds sound warnings for the AWBW timer.
+Adds audio warnings during the last 60 seconds of the timer.
 
 **Author:** Truniht
 
@@ -390,7 +390,7 @@ Makes Acid Rain units easier to distinguish.
 
 ### Power Charge Restyling
 
-Removes power bar animation, adds dynamic colors, and fixes spacing. Archived version 1.0:
+Removes power bar animation, adds dynamic colors, and fixes spacing.
 
 **Author:** Vincent Hendrikx
 
@@ -400,7 +400,7 @@ Removes power bar animation, adds dynamic colors, and fixes spacing. Archived ve
 
 ### Improved AWBW Music Player
 
-Adds music playback to AWBW.
+Adds an audio player inspired by the original games, with extra sound effects, music, and customization.
 
 **Author:** DeveloperJose
 
@@ -502,7 +502,7 @@ A community AWBW app with a replay viewer and game controls.
 
 ### AWBW API
 
-A C# API for AWBW.
+A C# library for accessing maps and games and creating or joining games using an authenticated browser account.
 
 **Author:** TheGamerASD
 

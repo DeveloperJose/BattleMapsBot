@@ -12,7 +12,7 @@ Server owners get a small set of maintenance commands for reloading, syncing, an
 
 ## Community code archive
 
-Scripts, snippets, and project links shared by the AWBW community in the "Community Development" thread are indexed in [community-code/README.md](community-code/README.md). The archive excludes raw messages, media, and archives; see [community-code/NOTICE.md](community-code/NOTICE.md) for attribution and removal requests.
+Scripts, snippets, and project links shared by the AWBW community in the "Community Development" thread are indexed in [community-code/README.md](community-code/README.md).
 
 ## Setup
 

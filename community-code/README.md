@@ -28,6 +28,16 @@ Browser extension by **saltor (kbuzsaki)** with Moveplanner Plus, damage calcula
 
 [Earlier extension](https://github.com/kbuzsaki/awbw_enhancements) · [darthnoob’s fork](https://github.com/carsonhu/awbw_enhancements)
 
+### Move Planner fix
+
+Fixes the unit values and power bar displayed by AWBW Enhancements in the move planner.
+
+**Author:** soccer152
+
+**Updated:** 2026-08-15
+
+[Open script](https://greasyfork.org/en/scripts/591411)
+
 ## Replay and match analysis
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1549752788840480798)
@@ -64,7 +74,7 @@ Adds a Stats button and graphs for two-player games. The author recommends compl
 
 **Shared:** 2022-09-18
 
-[Open AWBW Stats](<https://github.com/zielinskigr/awbw_stats>)
+[Project](https://github.com/zielinskigr/awbw_stats) · [Userscript](https://greasyfork.org/en/scripts/451910-awbw-stats)
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1021174970413494322)
 
@@ -91,18 +101,6 @@ Shows live graphs for unit count, income, army value, value per unit, and CO pow
 [Open script](<https://greasyfork.org/en/scripts/590643-awbw-match-stats>)
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1536297413478973552)
-
-### AWBW Stats charts
-
-The userscript edition of AWBW Stats adds a Stats button and graphs for two-player games. The author recommends completed games or ongoing standard and high funds games.
-
-**Author:** zielinskigr
-
-**Shared:** 2025-06-30
-
-[Open script](<https://greasyfork.org/en/scripts/451910-awbw-stats>)
-
-[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1389366266157863003)
 
 ### AWBW Replay Archive
 
@@ -236,6 +234,36 @@ A community userscript for the damage calculator.
 
 [Open project](<https://github.com/Ghoulean/AWBWUserScript>) · [Script](<https://github.com/Ghoulean/AWBWUserScript/blob/dev/dist/enhanced_calculator.bundle.user.js>)
 
+### Drawing Overlay
+
+Draw arrows, circles, and lines on the map.
+
+**Author:** new1234
+
+**Updated:** 2026-04-18
+
+[Open script](https://greasyfork.org/en/scripts/574414)
+
+### Income Grapher
+
+Preview income and tank order on a map.
+
+**Author:** Vesper | ShinyDeagle
+
+**Updated:** 2026-09-22
+
+[Open script](https://greasyfork.org/en/scripts/524215)
+
+### Damage Calculator Plugin
+
+Calculates damage in games.
+
+**Author:** zhangjk95
+
+**Updated:** 2018-04-22
+
+[Open script](https://greasyfork.org/en/scripts/40909)
+
 ## Game controls and information
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1564512502341963826)
@@ -266,17 +294,17 @@ Play AWBW with a gamepad. The archived copy is version 0.9.3.
 
 ### Game notes
 
-Add notes to matches and replays. Archived version 1.04.
+Add notes to matches and replays. The current published version is 1.06.
 
 **Author:** Truniht
 
 **Shared:** 2024-05-25
 
-[Previous version](<authors/truniht/files/AWBW_game_notes-1.03.user.js>) · [Open Game notes](<authors/truniht/files/AWBW_game_notes-1.04.user.js>)
+[Current script](https://greasyfork.org/en/scripts/450136-awbw-game-notes) · [Archived version 1.04](authors/truniht/files/AWBW_game_notes-1.04.user.js) · [Version 1.03](authors/truniht/files/AWBW_game_notes-1.03.user.js)
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1243926134484242594)
 
-### Capture limit
+### Capture limit and Capture display
 
 Calculates and displays the capture limit on player panels.
 
@@ -288,7 +316,7 @@ Calculates and displays the capture limit on player panels.
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1372370146487828501)
 
-### Capture display (Pure Version)
+#### Capture display (Pure Version)
 
 Shows balanced property counts, communications towers, units, and days.
 
@@ -438,6 +466,110 @@ A Chrome extension that notifies you when it is your turn.
 
 [Open project](<https://github.com/Aragon-Diego/AWBW-Turn-Notifier>)
 
+### Toggle Delete button
+
+Removes the unit Delete button to prevent accidental deletions.
+
+**Author:** soccer152
+
+**Updated:** 2026-08-17
+
+[Open script](https://greasyfork.org/en/scripts/591710)
+
+### More create game options
+
+Changes starting funds, income, and unit limits when creating a game.
+
+**Author:** new1234
+
+**Updated:** 2025-08-07
+
+[Open script](https://greasyfork.org/en/scripts/544911)
+
+### AWBW Essentials
+
+Adds client-side conveniences to the game.
+
+**Author:** Vesper | ShinyDeagle
+
+**Updated:** 2026-01-31
+
+[Open script](https://greasyfork.org/en/scripts/556074)
+
+### CO Info Panel
+
+Shows CO abilities and power meter when hovering over portraits in the join game and live queue selectors.
+
+**Author:** downloadpizza
+
+**Updated:** 2026-09-09
+
+[Open script](https://greasyfork.org/en/scripts/594104)
+
+### Game Filter
+
+Hides selected game types on the join game page.
+
+**Author:** Kupie
+
+**Updated:** 2025-09-17
+
+[Open script](https://greasyfork.org/en/scripts/549890)
+
+### HP Tracker
+
+Shows chip damage on units.
+
+**Author:** new1234
+
+**Updated:** 2026-05-02
+
+[Open script](https://greasyfork.org/en/scripts/572757)
+
+### Turn warning
+
+Adds audio and visual feedback to the browser tab when your turn starts.
+
+**Author:** Truniht
+
+**Updated:** 2024-12-01
+
+[Open script](https://greasyfork.org/en/scripts/486380)
+
+### Live league ELO
+
+Shows live league ELO beside player names, refreshing every ten minutes.
+
+**Author:** Truniht
+
+**Updated:** 2024-09-25
+
+[Open script](https://greasyfork.org/en/scripts/485589)
+
+### Disable Right Click in game
+
+Disables the browser context menu in games.
+
+**Author:** hollen9
+
+**Updated:** 2024-01-30
+
+[Open script](https://greasyfork.org/en/scripts/486080)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1292176143759179816)
+
+### Hide Buttons
+
+Hides buttons to prevent accidental power activation or ending a turn. The author does not recommend it for live play.
+
+**Author:** Vincent Hendrikx
+
+**Updated:** 2025-05-06
+
+[Open script](https://greasyfork.org/en/scripts/497051)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1247594873616465950)
+
 ## Appearance and audio
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1166001346000977930)
@@ -478,15 +610,15 @@ Removes power bar animation, adds dynamic colors, and fixes spacing.
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1246261350808944691)
 
-### Improved AWBW Music Player
+### AWBW Music Player
 
-Adds an audio player inspired by the original games, with extra sound effects, music, and customization.
+DeveloperJose’s improved version of twiggy_’s music player recreates the original game audio experience with extra sound effects, music, and customization.
 
 **Author:** DeveloperJose
 
 **Shared:** 2025-07-30
 
-[Open Improved AWBW Music Player](<https://greasyfork.org/en/scripts/518170-improved-awbw-music-player>)
+[Improved Music Player by DeveloperJose](https://greasyfork.org/en/scripts/518170-improved-awbw-music-player) · [Original Music Player by twiggy_](https://greasyfork.org/en/scripts/459630-awbw-music-player)
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1400131949619580938)
 
@@ -584,6 +716,58 @@ Removes seed numbers and adjusts tournament brackets to fit their contents.
 
 [Open script](<https://greasyfork.org/en/scripts/495988-awbw-tournament-bracket-cleaner-display>)
 
+### Power Bars
+
+Fixes CO power bar images.
+
+**Author:** twiggy_
+
+**Updated:** 2023-02-25
+
+[Open script](https://greasyfork.org/en/scripts/460681)
+
+### Sight Sparing Recolourer
+
+Replaces bright colors with dimmer ones and uses a solid dark background.
+
+**Author:** PathForger
+
+**Updated:** 2025-02-01
+
+[Open script](https://greasyfork.org/en/scripts/525579)
+
+### Viewer Count Hider
+
+Hides the viewer count.
+
+**Author:** aaafff
+
+**Updated:** 2025-06-08
+
+[Open script](https://greasyfork.org/en/scripts/538803)
+
+### Advance Dating by Web
+
+Restores the 2023 April Fools site design by Red.Halo.
+
+**Author:** Vincent Hendrikx
+
+**Updated:** 2025-04-01
+
+[Open script](https://greasyfork.org/en/scripts/511820)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1292998608680910869)
+
+### Colorblind-friendly Status Icons
+
+Gives status icons distinct shapes. This is a user style.
+
+**Author:** hollen9
+
+**Updated:** 2024-01-30
+
+[Open script](https://greasyfork.org/en/scripts/486082)
+
 ## Apps and developer tools
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1244311326063464499)
@@ -612,7 +796,6 @@ A C# library for accessing maps and games and creating or joining games using an
 
 ## Unavailable during review
 
-- [AWBW Hide Buttons](https://greasyfork.org/en/scripts/497051-awbw-hide-buttons): HTTP 503.
 - [Unofficial AWBW Rize Bot](https://github.com/soul4rent/UnofficialAWBWRizeBot): HTTP 404.
 
 [Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1531868972079648859)

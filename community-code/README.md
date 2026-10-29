@@ -10,11 +10,15 @@ Browser extension by **saltor (kbuzsaki)** with Moveplanner Plus, damage calcula
 
 [Project](https://github.com/kbuzsaki/awbw_enhancements) · Shared 2022-12-19
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1450234598465339565)
+
 ### darthnoob’s fork
 
 **darthnoob (carsonhu)** adds move planner hotkeys, tree-based snapshots, weather controls, automatic repairs, Hachi cost modifiers, and Firefox support. Install it as an unpacked extension.
 
 [Project](https://github.com/carsonhu/awbw_enhancements) · Shared 2025-11-22
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1450234738575937651)
 
 ### elio’s fork
 
@@ -26,6 +30,8 @@ Browser extension by **saltor (kbuzsaki)** with Moveplanner Plus, damage calcula
 
 ## Replay and match analysis
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1549752788840480798)
+
 ### AWBW Replay Player
 
 Downloads and plays completed AWBW replays on your computer. It saves replays locally, highlights actions with custom animations, and lets you change player countries and unit facing directions.
@@ -35,6 +41,8 @@ Downloads and plays completed AWBW replays on your computer. It saves replays lo
 **Shared:** 2023-04-02
 
 [Latest release](<https://github.com/DeamonHunter/AWBW-Replay-Player/releases/latest>) · [Previous releases](<https://github.com/DeamonHunter/AWBW-Replay-Player/releases>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1092147302694662335)
 
 ### Replay parser
 
@@ -46,6 +54,8 @@ A Python package for opening replay archives and stepping through actions and ga
 
 [Open Replay parser](<https://github.com/TarkanAl-Kazily/awbw_replay_parser>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1380342522794082486)
+
 ### AWBW Stats
 
 Adds a Stats button and graphs for two-player games. The author recommends completed games or ongoing standard and high funds games. Available as a browser extension or userscript.
@@ -55,6 +65,8 @@ Adds a Stats button and graphs for two-player games. The author recommends compl
 **Shared:** 2022-09-18
 
 [Open AWBW Stats](<https://github.com/zielinskigr/awbw_stats>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1021174970413494322)
 
 ### ELO history plotter
 
@@ -66,6 +78,8 @@ Scrapes and plots a player’s rating history. The latest archived script can in
 
 [Open ELO history plotter](<authors/ekkehard8/files/AWBW_ELO_history_plotter__2026-03-15.py>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1482543874739142819)
+
 ### AWBW Match Stats
 
 Shows live graphs for unit count, income, army value, value per unit, and CO power.
@@ -75,6 +89,8 @@ Shows live graphs for unit count, income, army value, value per unit, and CO pow
 **Shared:** 2026-08-10
 
 [Open script](<https://greasyfork.org/en/scripts/590643-awbw-match-stats>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1536297413478973552)
 
 ### AWBW Stats charts
 
@@ -86,6 +102,8 @@ The userscript edition of AWBW Stats adds a Stats button and graphs for two-play
 
 [Open script](<https://greasyfork.org/en/scripts/451910-awbw-stats>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1389366266157863003)
+
 ### AWBW Replay Archive
 
 Reload or download archived replays from 2023 onward.
@@ -96,6 +114,8 @@ Reload or download archived replays from 2023 onward.
 
 [Open script](<https://greasyfork.org/en/scripts/481486-awbw-replay-archive>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1181758906352017460)
+
 ### AWBW Maps Replay Search
 
 Adds a button to search Truniht's replay archive from map pages.
@@ -105,6 +125,8 @@ Adds a button to search Truniht's replay archive from map pages.
 **Shared:** 2025-05-24
 
 [Open script](<https://greasyfork.org/en/scripts/537157-awbw-maps-search-replays-in-truniht-s-archive-button>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1375980582839914516)
 
 ### AWBW Auto Replay + Play/Pause
 
@@ -118,6 +140,8 @@ Adds automatic replay playback with play and pause controls.
 
 ## Maps and move planning
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1388390160797798410)
+
 ### AWBW Map Analyzer
 
 Analyzes maps and shows tank movement in the map editor and map preview.
@@ -127,6 +151,8 @@ Analyzes maps and shows tank movement in the map editor and map preview.
 **Shared:** 2026-06-17
 
 [Open AWBW Map Analyzer](<https://greasyfork.org/en/scripts/524216-awbw-map-analyzer-v5-3>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1516813492273938433)
 
 ### Map Editor Enhancements
 
@@ -138,6 +164,8 @@ Adds configurable keybindings and other map editor improvements.
 
 [Open Map Editor Enhancements](<authors/steve3440/files/mapeditor.js>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1244699828403966103)
+
 ### Swap Sides
 
 Adds a move planner button to swap sides on two-player rotationally symmetric maps.
@@ -147,6 +175,8 @@ Adds a move planner button to swap sides on two-player rotationally symmetric ma
 **Shared:** 2023-10-28
 
 [Open Swap Sides](<authors/steve3440/files/swapCountries.js>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1167767186014736415)
 
 ### AWBW Move Planner Button in Game List
 
@@ -158,6 +188,8 @@ Adds a move planner button to the game list.
 
 [Open script](<https://greasyfork.org/en/scripts/533165-awbw-move-planner-button-in-game-list>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1362502150885740885)
+
 ### AWBW Map Generator
 
 Generates a mirrored competitive map layout using configurable map size, bases, properties, and terrain. Original code is by Ilese (NQ BN), republished with permission by Rorolina-Frixell.
@@ -167,6 +199,8 @@ Generates a mirrored competitive map layout using configurable map size, bases, 
 **Shared:** 2023-02-22
 
 [Open project](<https://github.com/Rorolina-Frixell/AWBW-Map-Generator>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1077778357955080282)
 
 ### AI Map Generator
 
@@ -178,6 +212,8 @@ Generates map drafts and fills selected parts of existing maps using an included
 
 [Open project](<https://github.com/npiriou/awbw-map-generator>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1557308075621486592)
+
 ### AWBW Map Editor
 
 Headphone's AWBW map editor.
@@ -187,6 +223,8 @@ Headphone's AWBW map editor.
 **Shared:** 2022-04-23
 
 [Open project](<https://github.com/mirddes/AWBW-editor>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/967361130236354580)
 
 ### Enhanced calculator
 
@@ -200,6 +238,8 @@ A community userscript for the damage calculator.
 
 ## Game controls and information
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1564512502341963826)
+
 ### Advanced Hotkeys
 
 Adds rebindable hotkeys for AWBW actions, configured through a Hotkey button in the game menu.
@@ -209,6 +249,8 @@ Adds rebindable hotkeys for AWBW actions, configured through a Hotkey button in 
 **Shared:** 2025-12-01
 
 [Open Advanced Hotkeys](<https://greasyfork.org/en/scripts/557553-awbw-advanced-hotkeys>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1445088505863606293)
 
 ### Gamepad Controls
 
@@ -220,6 +262,8 @@ Play AWBW with a gamepad. The archived copy is version 0.9.3.
 
 [Open Gamepad Controls](<authors/truniht/files/awbw_gamepad.js>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1395202561090523166)
+
 ### Game notes
 
 Add notes to matches and replays. Archived version 1.04.
@@ -229,6 +273,8 @@ Add notes to matches and replays. Archived version 1.04.
 **Shared:** 2024-05-25
 
 [Previous version](<authors/truniht/files/AWBW_game_notes-1.03.user.js>) · [Open Game notes](<authors/truniht/files/AWBW_game_notes-1.04.user.js>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1243926134484242594)
 
 ### Capture limit
 
@@ -240,6 +286,8 @@ Calculates and displays the capture limit on player panels.
 
 [Open Capture limit](<https://greasyfork.org/en/scripts/511814-awbw-capture-limit>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1372370146487828501)
+
 ### Capture display (Pure Version)
 
 Shows balanced property counts, communications towers, units, and days.
@@ -249,6 +297,8 @@ Shows balanced property counts, communications towers, units, and days.
 **Shared:** 2026-05-13
 
 [Open Capture display (Pure Version)](<https://greasyfork.org/zh-CN/scripts/577857-awbw-%E5%8D%A0%E9%A2%86%E6%98%BE%E7%A4%BA-pure-version-3-0520-stable>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1503910879329255494)
 
 ### Disable useless units
 
@@ -260,6 +310,8 @@ Disables selected units in the build menu. Archived version 0.2.
 
 [Previous version](<authors/steve3440/files/disable-units.js>) · [Open Disable useless units](<authors/rainfallpianist/files/awbw-disable-useless-units-0.2.user.js>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1380065302687256586)
+
 ### Undo Buy
 
 Click units to undo purchases before ending the turn.
@@ -269,6 +321,8 @@ Click units to undo purchases before ending the turn.
 **Shared:** 2024-01-24
 
 [Open Undo Buy](<authors/steve3440/files/undo-buy.js>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1199741618505404507)
 
 ### Adjusted Income
 
@@ -280,6 +334,8 @@ Calculates adjusted income for the next turn.
 
 [Open script](<https://greasyfork.org/en/scripts/459489-awbw-adjusted-income>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1072292114173534299)
+
 ### Lobby player scores
 
 Shows players' official scores next to their names on the join game page.
@@ -289,6 +345,8 @@ Shows players' official scores next to their names on the join game page.
 **Shared:** 2024-01-30
 
 [Open script](<https://greasyfork.org/en/scripts/486076>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1201933550476337272)
 
 ### Game Chat
 
@@ -300,6 +358,8 @@ Shows chat on the game page.
 
 [Open script](<https://greasyfork.org/en/scripts/545300-awbw-game-chat>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1445185915734589536)
+
 ### Dynamic Build Menu
 
 Arranges the in-game build menu into columns.
@@ -307,6 +367,8 @@ Arranges the in-game build menu into columns.
 **Shared:** 2024-02-11
 
 [Latest archived version](<authors/astaroth32/files/AWBW_Dymanic_Columns_BuildMenu__2024-02-11.js>) · [Earlier version](<authors/astaroth32/files/AWBW_Dymanic_Columns_BuildMenu.js>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1206327823229386782)
 
 ### Improved Build Menu
 
@@ -318,6 +380,8 @@ Keeps the build menu on screen and uses two columns when needed.
 
 [Open Improved Build Menu](<authors/steve3440/files/build-menu.js>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1206374723986923580)
+
 ### Menu Mover
 
 Moves the unit and build menus in games and the move planner.
@@ -325,6 +389,8 @@ Moves the unit and build menus in games and the move planner.
 **Shared:** 2023-09-02
 
 [Archived version 1.2](<authors/astaroth32/files/FIXED_AWBW_Menu_Mover.user.js>) · [Earlier version](<authors/astaroth32/files/AWBW_UnitBuild_Menu_Mover.user__2023-08-15.js>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1147626399524454481)
 
 ### AWBW Highlight Cursor Coordinates
 
@@ -336,6 +402,8 @@ Highlights the coordinates under the cursor.
 
 [Open script](<https://greasyfork.org/en/scripts/520884-awbw-highlight-cursor-coordinates>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1318150265332830230)
+
 ### AWBW Power Charge Display
 
 Displays CO power charge values as rounded integers.
@@ -346,6 +414,8 @@ Displays CO power charge values as rounded integers.
 
 [Open script](<https://greasyfork.org/zh-CN/scripts/577858-awbw%E6%8C%87%E6%8C%A5%E6%8A%80%E5%85%85%E8%83%BD%E6%98%BE%E7%A4%BA-v1-7515>) · [Earlier archived version](<authors/gelsnow/files/message__2025-02-13.txt>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1503910835011981423)
+
 ### Timer warning sounds
 
 Adds audio warnings during the last 60 seconds of the timer.
@@ -355,6 +425,8 @@ Adds audio warnings during the last 60 seconds of the timer.
 **Shared:** 2025-12-12
 
 [Open Timer warning sounds](<https://greasyfork.org/en/scripts/480914-awbw-timer-warning-sounds>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1449056670218195055)
 
 ### AWBW Turn Notifier
 
@@ -368,6 +440,8 @@ A Chrome extension that notifies you when it is your turn.
 
 ## Appearance and audio
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1166001346000977930)
+
 ### Change army direction
 
 Use the arrow in the army selector to change a player’s facing direction.
@@ -377,6 +451,8 @@ Use the arrow in the army selector to change a player’s facing direction.
 **Shared:** 2026-08-06
 
 [Archived version 1.02](<authors/truniht/files/AWBW_Change_army_direction-1.02.user.js>) · [Previous version](<authors/truniht/files/AWBW_Change_army_direction-1.01.user.js>) · [Open Change army direction](<https://greasyfork.org/en/scripts/517608-awbw-change-army-direction>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1534729348429647953)
 
 ### Acid Rain Brighter Sprites
 
@@ -388,6 +464,8 @@ Makes Acid Rain units easier to distinguish.
 
 [Open Acid Rain Brighter Sprites](<authors/vincent-binsento/files/AWBW_Acid_Rain_Brighter_Sprites.user.js>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1206986928935669850)
+
 ### Power Charge Restyling
 
 Removes power bar animation, adds dynamic colors, and fixes spacing.
@@ -397,6 +475,8 @@ Removes power bar animation, adds dynamic colors, and fixes spacing.
 **Shared:** 2024-06-01
 
 [Current release](<https://greasyfork.org/en/scripts/496687-awbw-power-charge-restyling>) · [Open Power Charge Restyling](<authors/vincent-binsento/files/AWBW_Power_Charge_Restyling-1.0.user.js>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1246261350808944691)
 
 ### Improved AWBW Music Player
 
@@ -408,6 +488,8 @@ Adds an audio player inspired by the original games, with extra sound effects, m
 
 [Open Improved AWBW Music Player](<https://greasyfork.org/en/scripts/518170-improved-awbw-music-player>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1400131949619580938)
+
 ### AWBW Live League Opponent Name Hider
 
 Hides opponent names in live league.
@@ -417,6 +499,8 @@ Hides opponent names in live league.
 **Shared:** 2026-05-27
 
 [Open script](<https://greasyfork.org/en/scripts/538697-awbw-live-league-opponent-name-hider>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1509274553925369866)
 
 ### Colourblind support
 
@@ -428,6 +512,8 @@ Swap player colours to Orange Star and Blue Moon or choose a colour by clicking 
 
 [Open script](<https://greasyfork.org/en/scripts/450135-awbw-colourblind-support>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1278077137802494064)
+
 ### Custom Army Importer
 
 Loads custom army sprites for display in your browser.
@@ -437,6 +523,8 @@ Loads custom army sprites for display in your browser.
 **Shared:** 2024-12-18
 
 [Open script](<https://greasyfork.org/en/scripts/521087-awbw-custom-army-importer-beta-1-1>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1318813813046378556)
 
 ### AWBW Maximise
 
@@ -448,6 +536,8 @@ Expands the usable game area and rearranges page elements.
 
 [Open script](<https://greasyfork.org/en/scripts/511815-awbw-maximise>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1292974721326911490)
+
 ### Power Banners
 
 Shows a banner when a player's CO power or super power is ready.
@@ -457,6 +547,8 @@ Shows a banner when a player's CO power or super power is ready.
 **Shared:** 2023-03-04
 
 [Open script](<https://greasyfork.org/en/scripts/461182-awbw-power-banners>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1081658527757631548)
 
 ### Pixel Pefector
 
@@ -468,6 +560,8 @@ Makes game sprites render with crisp pixels.
 
 [Open script](<https://greasyfork.org/en/scripts/460264-awbw-pixel-pefector>)
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1076674375987757146)
+
 ### Power Bar Hider
 
 Hides the power bars.
@@ -477,6 +571,8 @@ Hides the power bars.
 **Shared:** 2025-08-07
 
 [Open script](<https://greasyfork.org/en/scripts/463074-awbw-power-bar-hider>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1403107997646848171)
 
 ### Tournament Bracket Cleaner
 
@@ -490,6 +586,8 @@ Removes seed numbers and adjusts tournament brackets to fit their contents.
 
 ## Apps and developer tools
 
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1244311326063464499)
+
 ### Unofficial AWBW App
 
 A community AWBW app with a replay viewer and game controls.
@@ -499,6 +597,8 @@ A community AWBW app with a replay viewer and game controls.
 **Shared:** 2024-01-30
 
 [Latest release](<https://github.com/soul4rent/UnofficialAWBWApp/releases/latest>) · [Previous releases](<https://github.com/soul4rent/UnofficialAWBWApp/releases>)
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1202031582979051540)
 
 ### AWBW API
 
@@ -514,3 +614,5 @@ A C# library for accessing maps and games and creating or joining games using an
 
 - [AWBW Hide Buttons](https://greasyfork.org/en/scripts/497051-awbw-hide-buttons): HTTP 503.
 - [Unofficial AWBW Rize Bot](https://github.com/soul4rent/UnofficialAWBWRizeBot): HTTP 404.
+
+[Thread message](https://discord.com/channels/313453805150928906/945580784629215253/1531868972079648859)

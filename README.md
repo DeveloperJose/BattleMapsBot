@@ -49,9 +49,3 @@ The bot requires the following permissions in the server/channel to function:
 *   **Attach Files**
 
 If the bot doesn't respond to links, check that it has both **View Channels** and **Send Messages** permissions in the channel.
-
-## Map preview tabs and league tiers
-
-Tabs are Preview, League Info, Properties. League Info is shown only for maps in the current league snapshot; other maps retain Preview and Properties. Map titles omit the [Map] prefix. The map data fetch time appears in the embed footer using a native Discord timestamp. The league settings fetch age appears as a Discord relative timestamp in the embed description. Both reflect successful fetch times, so reading cached data does not reset the age.
-
-The public league API snapshot is shared across all maps and saved to `data/league.db` beside the persistent stats database (override with `LEAGUE_DB_PATH`). A background task checks every five minutes and refreshes data after six hours. The first preview can also populate an empty cache. Concurrent requests share one refresh; failures retain the last successful snapshot and retry after five minutes. Maps absent from the current pool have no League Info tab, regardless of historical category labels. The tab shows enabled CO tiers and the setup-specific unit bans, unit limit, and capture limit.

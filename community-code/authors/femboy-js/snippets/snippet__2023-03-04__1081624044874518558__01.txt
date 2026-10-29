@@ -1,0 +1,17 @@
+function findShortestPath(solved, end) {
+  var dist = solved.dist,
+      previous = solved.previous;
+  var path = []; 
+  
+  //Case where target tile is an enemy unit
+  if (dist[end] === Infinity && previous[end]) 
+    end = previous[end];
+  if (dist[end] === Infinity) 
+    return path;
+
+  for (var i = end; i !== null; i = previous[i]) {
+    path.push(i);
+  }
+
+  return path.reverse();
+}

@@ -1,0 +1,6 @@
+let showBuildOptionsOld = showBuildOptions;
+showBuildOptions = function(x, y) {
+    // do stuff before the original function
+    showBuildOptionsOld(x, y);
+    // do stuff after the original function
+}

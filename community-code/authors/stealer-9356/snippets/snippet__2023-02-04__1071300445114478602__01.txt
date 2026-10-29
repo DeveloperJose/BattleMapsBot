@@ -1,0 +1,14 @@
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct GameState {
+    /** 1D Vec of the map starting from the top left. */
+    map: Vec<TileKind>,
+    /** The (width, height) of the map. */
+    map_dimensions: (usize, usize),
+
+    /** BTreeMap storing for at a given index in `map` what unit is stored
+     * there. */
+    units: BTreeMap<usize, UnitState>,
+
+    players: Vec<(CountryKind, OfficerKind, PowerKind)>,
+    teams: Vec<HashSet<usize>>,
+}

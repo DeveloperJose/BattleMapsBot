@@ -1,0 +1,3 @@
+    pub timers_increment: Duration,
+    pub timers_initial: Duration,
+    pub timers_max_turn: Duration,

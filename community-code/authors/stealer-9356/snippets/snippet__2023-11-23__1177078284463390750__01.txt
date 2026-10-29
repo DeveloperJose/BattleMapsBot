@@ -1,0 +1,30 @@
+  async fn login(&self) -> Result<(), ApiError> {
+        let base_url = "https://awbw.amarriner.com".parse::<Url>().unwrap();
+
+        self.post_url("https://awbw.amarriner.com/logincheck.php", &{
+            let mut data = BTreeMap::new();
+            data.insert(String::from("username"), self.username.clone());
+            data.insert(String::from("password"), self.password.clone());
+            data
+        })
+        .await?;
+        if !format!("{:?}", self.cookies.cookies(&base_url)).contains("PHPSESSID") {
+            return Err(ApiError::new(ApiErrorKind::LoginFailed(412)));
+        }
+
+        self.post_url("https://awbw.amarriner.com/logincheck.php", &{
+            let mut data = BTreeMap::new();
+            data.insert(String::from("username"), self.username.clone());
+            data.insert(String::from("password"), self.password.clone());
+            data
+        })
+        .await?;
+        if {
+            let cookie_string = format!("{:?}", self.cookies.cookies(&base_url));
+            !cookie_string.contains("awbw_username") || !cookie_string.contains("awbw_password")
+        } {
+            return Err(ApiError::new(ApiErrorKind::LoginFailed(401)));
+        }
+
+        Ok(())
+    }

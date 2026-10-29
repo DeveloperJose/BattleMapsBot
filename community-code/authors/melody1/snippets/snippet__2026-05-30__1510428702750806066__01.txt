@@ -1,0 +1,5 @@
+Load the replay
+Look at the players' nations
+Try to parse those into strings that can go "[nation name] Commander"
+Change the player's name to said thing above (so smth like Blue Moon Commander) 
+Do that for however many players the replay has

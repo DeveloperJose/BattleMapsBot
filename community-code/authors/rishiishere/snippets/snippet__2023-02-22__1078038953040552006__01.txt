@@ -1,0 +1,7 @@
+put (start, 0) in list
+for tile in list
+  go to each neighboring tile and check its cost
+  if its the fastest way to get there:
+    add (node, cost) to list
+
+return list

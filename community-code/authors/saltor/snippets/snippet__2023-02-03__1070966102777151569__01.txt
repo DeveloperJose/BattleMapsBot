@@ -1,0 +1,5 @@
+$ /Applications/AWBW\ Replay\ Player.app/Contents/MacOS/AWBW\ Replay\ Player ; exit;
+Failed to load /Applications/AWBW Replay Player.app/Contents/MacOS/libhostfxr.dylib, error: dlopen(/Applications/AWBW Replay Player.app/Contents/MacOS/libhostfxr.dylib, 0x0001): tried: '/Applications/AWBW Replay Player.app/Contents/MacOS/libhostfxr.dylib' (code signature in <884FE940-7E05-3FC9-9B21-A362097D4A00> '/Applications/AWBW Replay Player.app/Contents/MacOS/libhostfxr.dylib' not valid for use in process: mapped file has no Team ID and is not a platform binary (signed with custom identity or adhoc?))
+The library libhostfxr.dylib was found, but loading it from /Applications/AWBW Replay Player.app/Contents/MacOS/libhostfxr.dylib failed
+  - Installing .NET prerequisites might help resolve this problem.
+     https://go.microsoft.com/fwlink/?linkid=2063366

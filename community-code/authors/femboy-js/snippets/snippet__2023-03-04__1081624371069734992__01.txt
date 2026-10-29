@@ -1,0 +1,6 @@
+var movementInfo = {
+    dist: dist,
+    previous: previous,
+    mCost: mCost,
+    mp: mp
+  };

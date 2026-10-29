@@ -1,0 +1,9 @@
+var terrainId = ((_terrainInfo$x = terrainInfo[x]) === null 
+  || _terrainInfo$x === void 0 ? void 0 : (_terrainInfo$x$y = _terrainInfo$x[y]) === null 
+  || _terrainInfo$x$y === void 0 ? void 0 : _terrainInfo$x$y.terrain_id) 
+      || ((_buildingsInfo$x = buildingsInfo[x]) === null 
+      || _buildingsInfo$x === void 0 ? void 0 : (_buildingsInfo$x$y = _buildingsInfo$x[y]) === null 
+      || _buildingsInfo$x$y === void 0 ? void 0 : _buildingsInfo$x$y.terrain_id);
+  var mCost = (_moveCosts$terrainId = moveCosts[terrainId]) === null 
+  || _moveCosts$terrainId === void 0 ? void 0 : (_moveCosts$terrainId$ = _moveCosts$terrainId[tempWCode]) === null 
+  || _moveCosts$terrainId$ === void 0 ? void 0 : _moveCosts$terrainId$[mType]; 

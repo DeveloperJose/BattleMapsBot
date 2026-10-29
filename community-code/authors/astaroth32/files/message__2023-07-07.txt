@@ -1,0 +1,117 @@
+// ==UserScript==
+// @name             AWBW Unit/Build Menu Mover
+// @match            https://awbw.amarriner.com/2030.php*
+// @version          1.0
+// ==/UserScript==
+
+function applyCSS(el, styles) {
+  for (var prop in styles) {
+    el.style[prop] = styles[prop];
+  }
+}
+
+// Select the node that will be observed for mutations
+//const buildMenu = document.getElementById("build-menu"); //Move PLanner
+//const optionsMenu = document.getElementById("options-menu"); //Move Planner Only
+
+//const unitOptionsMenu = document.getElementsByClassName("unit-options-game")[0]; //Move/Attack/Capture menu for unit in active game
+
+// Options for the observer (which mutations to observe)
+const config = { attributes: true, childList: false, subtree: false };
+
+// variable how scaled the map size is
+let scaleZoom = 1;
+
+function observerCreation(optionsMenu, pxMove) {
+  // Callback function to execute when mutations are observed
+  const callback = (mutationList, observer) => {
+    for (const mutation of mutationList) {
+      if (mutation.type === "attributes") {
+        console.log(`The ${mutation.attributeName} attribute was modified.`);
+        observer.disconnect();
+        if (optionsMenu.style.getPropertyValue("display") !== ("block"))
+        //if (optionsMenu.getAttribute("style").slice(0,15) !== "display: block;") //previous way
+          {console.log("Not blocked");
+           observer.observe(optionsMenu, config);
+           break;
+          }
+        else {
+          //check current scale up the map size is
+          //scaleZoom = parseInt(document.getElementById("gamemap").style.getPropertyValue("transform").getPropertyValue("scale"));
+          scaleZoom = Number(document.getElementById("gamemap").style.getPropertyValue("transform").slice(6,-1));
+          console.log("scaleZoom = " + scaleZoom);
+          if (scaleZoom !== isNaN) {console.log("fack");}
+          else {console.log("gud");}
+
+          //how far down the page scrolled compared to how big the screen is
+          //let coord_y1 = ((window.screen.availHeight + window.scrollY) / window.screen.availHeight);
+          let coord_y1 = window.scrollY;
+
+          console.log(optionsMenu.getAttribute("style").slice(0,15));
+          console.log("map position = " + parseInt(optionsMenu.style.top));
+          console.log("map position (non-scaled) = " + parseInt(optionsMenu.style.top)/scaleZoom);
+
+          console.log("screen.availHeight: " + parseInt(window.screen.availHeight));
+          console.log("scrollY: " + parseInt(window.scrollY));
+
+          //how many items there are in the menu (number of units in build menu or actions in unit options. div > ul > li li li li etc.)
+          //let countItems = optionsMenu.ul[0].childElementCount;
+          let countItems = optionsMenu.firstElementChild.childElementCount;
+          console.log("There are " + parseInt(countItems) + " children (number of li elements aka. items)");
+
+
+          console.log("Scrolled down (coordY): " + String(coord_y1));
+          console.log("position (top): " + parseInt(optionsMenu.style.top));
+
+          //omfg I should obviously be using screen available height to decide... later...
+          //or ideally if I could figure out where on the screen the cursor is located...
+
+          //When to NOT make the build/unit options menu go upwards instead of downwards:
+          //if (parseInt(unitOptionsMenu.style.top) < 416 * coord_y1) {
+          //if (parseInt(optionsMenu.style.top) < 416 * scaleZoom + coord_y1 * scaleZoom) {
+          //if (parseInt(optionsMenu.style.top) < (416 + pxMove - pxMove * countItems) * scaleZoom + coord_y1 * scaleZoom) {
+          if (parseInt(optionsMenu.style.top) * scaleZoom > 416*scaleZoom + coord_y1 ) {
+            applyCSS(optionsMenu, {
+            //display: "block",
+            //left: parseInt(menu.style.left) + 0 + "px",
+            top: parseInt(optionsMenu.style.top) - pxMove * countItems + "px" //This moves the menus up
+          });
+            console.log("High (drop down)");
+          }
+          else if (parseInt(optionsMenu.style.top) * scaleZoom > 208*scaleZoom + coord_y1 ) {
+            console.log("position = " + String(coord_y1));
+            applyCSS(optionsMenu, {
+            //display: "block",
+            //left: parseInt(menu.style.left) + 0 + "px",
+            top: parseInt(optionsMenu.style.top) - pxMove * countItems/2 + "px" //This moves the menus up half as much as the above
+          });
+            console.log("Middle");
+          }
+          else {
+            console.log("Too close to the bottom of the screen! (" + String(coord_y1) + ")");
+            console.log("Low (Move Up)");
+          }
+          console.log("Menu Size: " + String(pxMove * countItems) );
+          /*applyCSS(optionsMenu, {
+            //display: "block",
+            //left: parseInt(menu.style.left) + 0 + "px",
+            top: parseInt(optionsMenu.style.top) + pxMove * countItems + "px" //This moves the menus down
+          });*/
+        }
+        observer.observe(optionsMenu, config);
+        break;
+      }
+    }
+  };
+
+  // Create an observer instance linked to the callback function
+  const observer = new MutationObserver(callback);
+
+  // Start observing the target node for configured mutations
+  observer.observe(optionsMenu, config);
+  console.log(optionsMenu); //I actually never see this
+}
+
+//optionsMenu (unit-options-game, build-options-game. unit-options-menu, build-menu), pxMove (how many pixels to move the Menu), boolMidpoint (if there's an extra step mid-screen with pxMove/2)
+observerCreation(document.getElementsByClassName("unit-options-game")[0], 36);
+observerCreation(document.getElementsByClassName("build-options-game")[0], 36);

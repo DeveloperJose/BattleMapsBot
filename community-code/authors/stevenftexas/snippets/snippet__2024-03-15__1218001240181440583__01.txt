@@ -1,0 +1,2 @@
+random.seed(hash(state))
+name = random.choieces(ascii.uppercase, k=4)

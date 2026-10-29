@@ -1,0 +1,2 @@
+// @match        https://awbw.amarriner.com/*?games_id=*
+// @match        https://awbw.amarriner.com/*?replays_id=*

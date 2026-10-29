@@ -1,0 +1,15 @@
+// ==UserScript==
+// @name        AWBW FOR CLANDY!
+// @namespace   Violentmonkey Scripts
+// @match       https://awbw.amarriner.com/game.php*
+// @grant       none
+// @version     1.0
+// @author      IceDryst
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @description 5/7/2025, 10:12:31 PM
+// ==/UserScript==
+"use strict";var PowerState;(function(PowerState){PowerState.Y="Y";PowerState.N="N";PowerState.S="S"})(PowerState||(PowerState={}));function track_power(){for(const player_table of playersTable.children){const idStr=parseInt(player_table.id.replace("player",""));const id=Number(idStr);const entry=playersInfo[id];if(entry.co_name=="Andy"){let power_overflow_key="";if(Object.keys(replay).length!==0){power_overflow_key=String(gameId)+"power_overflow_rep_"+idStr;if(gameTurn==0){GM_setValue(power_overflow_key,0)}}else{power_overflow_key=String(gameId)+"power_overflow_"+idStr}
+if(entry.players_co_power_on==PowerState.Y){const overflow=entry.players_co_power;GM_setValue(power_overflow_key,overflow);console.log("COP is on for "+entry.players_id)}else{var overflow_power=GM_getValue(power_overflow_key,0);const can_cop=entry.players_co_power-overflow_power>=entry.players_co_max_power;if(!can_cop){const targetCell=player_table.children[1];targetCell.style.filter="grayscale(100%)";targetCell.style.opacity="0.6";targetCell.title="CO Power ready!"}else{const targetCell=player_table.children[1];targetCell.style.filter="";targetCell.style.opacity="";targetCell.title=""}}}}}
+function main(){const powerBars=document.querySelectorAll(".power-bar");const observer=new MutationObserver((mutationsList)=>{for(const mutation of mutationsList){if(mutation.type==="attributes"||mutation.type==="childList"||mutation.type==="characterData"){track_power()}}});powerBars.forEach((bar)=>{observer.observe(bar,{attributes:!0,childList:!0,characterData:!0,subtree:!0,})});track_power()}
+main()

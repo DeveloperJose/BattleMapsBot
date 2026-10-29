@@ -1,0 +1,25 @@
+document.addEventListener("pixelMap", function(event){
+        // Disable AA
+        document.styleSheets[0].insertRule(`
+        div#gamemap img {
+            image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
+            image-rendering: -moz-crisp-edges;          /* Firefox                        */
+            image-rendering: -o-crisp-edges;            /* Opera                          */
+            image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+            image-rendering: pixelated; /* Chrome */
+            image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
+            -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
+        }
+        `, 0);
+        document.styleSheets[0].insertRule(`
+        .terrain-info-sprite img, .unit-info-sprite img {
+            image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
+            image-rendering: -moz-crisp-edges;          /* Firefox                        */
+            image-rendering: -o-crisp-edges;            /* Opera                          */
+            image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+            image-rendering: pixelated; /* Chrome */
+            image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
+            -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
+        }
+        `, 0);
+});

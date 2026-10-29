@@ -4,6 +4,7 @@ import time
 from typing import Optional, Dict, Any
 from aiolimiter import AsyncLimiter
 from src.core.stats import BotStats
+from src.core.awbw_categories import parse_map_categories
 from src.config import config
 
 logger = logging.getLogger(__name__)
@@ -95,3 +96,40 @@ class AWBWClient:
                 raise
             finally:
                 BotStats().record_api_request(time.time() - start_time)
+
+    async def get_map_categories(self, map_id: int) -> list[str]:
+        session = await self.get_session()
+        async with self._limiter:
+            start_time = time.time()
+            try:
+                async with session.get(
+                    "https://awbw.amarriner.com/prevmaps.php",
+                    params={"maps_id": map_id},
+                    headers={"User-Agent": "BattleMapsBot/1.0"},
+                ) as response:
+                    if response.status != 200:
+                        raise ConnectionError(
+                            f"AWBW map page returned status {response.status}"
+                        )
+                    return parse_map_categories(await response.text())
+            finally:
+                BotStats().record_api_request(time.time() - start_time)
+
+    async def get_league_setups(self) -> dict:
+        """Read the same public league snapshot used by newleaguesetups.php."""
+        session = await self.get_session()
+        async with self._limiter:
+            started = time.time()
+            try:
+                async with session.post(
+                    "https://awbw.amarriner.com/api/league/maps.php",
+                    json={"method": "listMaps"},
+                    headers={"User-Agent": "BattleMapsBot/1.0"},
+                ) as response:
+                    if response.status != 200:
+                        raise ConnectionError(
+                            f"AWBW league API returned status {response.status}"
+                        )
+                    return await response.json()
+            finally:
+                BotStats().record_api_request(time.time() - started)

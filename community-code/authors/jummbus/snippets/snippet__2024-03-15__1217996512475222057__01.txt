@@ -1,0 +1,2 @@
+W, X, Y, or Z: 1/32 = 3.12% chance to select
+any other letter: 1/32 + (6/32 * 1/22) = 3.97% chance to select

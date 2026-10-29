@@ -1,0 +1,8 @@
+const remap = {
+    // Insert old -> new links here
+    "neutralcity.gif": "https://link.to/my_neutralcity.gif",
+    "neutralairport.gif": "https://link.to/my_neutralcity.gif",
+};
+Object.entries(remap).forEach( ([old_link, new_link]) => {
+    document.querySelectorAll(`img[src$="${old_link}"`).forEach(el => el.src = new_link);
+});

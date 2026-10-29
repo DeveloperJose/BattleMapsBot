@@ -1,0 +1,13 @@
+// ==UserScript==
+// @name         AWBW Pixelation
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  try to take over the world!
+// @author       You
+// @match        https://awbw.amarriner.com/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=amarriner.com
+// @grant        none
+// ==/UserScript==
+
+javascript:(function(){const style=document.createElement('STYLE');style.innerText=`#gamemap img {image-rendering:optimizeSpeed;image-rendering:-moz-crisp-edges;image-rendering:-o-crisp-edges;image-rendering:-webkit-optimize-contrast;image-rendering:pixelated;image-rendering:optimize-contrast;-ms-interpolation-mode:nearest-neighbor;}#gamemap canvas {image-rendering:optimizeSpeed;image-rendering:-moz-crisp-edges;image-rendering:-webkit-optimize-contrast;image-rendering:-o-crisp-edges;image-rendering:optimize-contrast;-ms-interpolation-mode:nearest-neighbor;}
+`;document.getElementsByTagName('head')[0].appendChild(style)})();

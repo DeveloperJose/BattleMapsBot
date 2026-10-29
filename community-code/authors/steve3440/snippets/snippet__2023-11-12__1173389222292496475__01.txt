@@ -1,0 +1,44 @@
+(async function() {
+const canvas = document.createElement('canvas'),
+      mapImg = document.getElementById('map-background');
+//document.getElementById('map-background').replaceWith(canvas);
+canvas.id = 'map-background-canvas';
+canvas.style.zIndex = 99;
+
+mapImg.style.visibility = 'hidden';
+if(!document.getElementById('map-background-canvas')) {
+    mapImg.insertAdjacentElement('afterend', canvas);
+} else {
+    document.getElementById('map-background-canvas').replaceWith(canvas);
+}
+
+canvas.width = maxX * 16;
+canvas.height = maxY * 16;
+
+const ctx = canvas.getContext('2d'),
+      tileCache = {},
+      tilePath = imgHost + terrainPath;
+
+for (let x = 0; x < maxX; x++) {
+    for (let y = 0; y < maxY; y++) {
+        const tile = terrainInfo[x][y]?.terrain_name;
+        if (!tile) continue;
+        const src = tilePath + tile.toLowerCase() + '.gif';
+        if (!tileCache[tile]) {
+            tileCache[tile] = new Image();
+            tileCache[tile].src = src;
+        }
+    }
+}
+(function render () {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let x = 0; x < maxX; x++) {
+        for (let y = 0; y < maxY; y++) {
+            const tile = terrainInfo[x][y];
+            if (!tile) continue;
+            ctx.drawImage(tileCache[tile.terrain_name], x*16, y*16-tile.terrain_offset);
+        }
+    }
+    requestAnimationFrame(render);
+})();
+})();

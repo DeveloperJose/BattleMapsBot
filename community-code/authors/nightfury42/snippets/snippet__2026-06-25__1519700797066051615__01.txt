@@ -1,0 +1,27 @@
+function templatePlayerOverviewBar(gameInfo, playerInfo, liveInfo) {
+  if (isNoCoPower(playerInfo)) {
+    return "";
+  }
+
+  let co = kCosByName[playerInfo.co_name];
+
+  let copBars = co.co_max_power / 90000;
+  let scopBars = (co.co_max_spower - co.co_max_power) / 90000;
+
+  let isCopActive = liveInfo.co_power === "Y";
+  let isScopActive = liveInfo.co_power === "S";
+  let isAnyPower = isCopActive || isScopActive;
+  let powerHtml = isScopActive ? kSuperHtml : (isCopActive ? kPowerHtml : "");
+
+  // Special handling for Von Bolt
+  if (co.co_max_power === co.co_max_spower) {
+    scopBars = copBars;
+    copBars = 0;
+  }
+
+  let copBarsHtml = templateBars(copBars, false, liveInfo.current_charge, playerInfo.players_co_max_power);
+  let scopBarsHtml = templateBars(scopBars, true,
+    Math.max(0, liveInfo.current_charge - playerInfo.players_co_max_power),
+    playerInfo.players_co_max_spower - playerInfo.players_co_max_power);
+  let copChargeShow = `${liveInfo.current_charge / 10}/${playerInfo.players_co_max_power / 10}`;
+  let scopChargeShow = `${liveInfo.current_charge / 10}/${playerInfo.players_co_max_spower / 10}`;

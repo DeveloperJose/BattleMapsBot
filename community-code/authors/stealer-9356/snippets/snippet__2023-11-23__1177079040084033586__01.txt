@@ -1,0 +1,1 @@
+{"gameId":1057380,"turn":1,"turnPId":2524690,"turnDay":11,"initial":false}

@@ -1,0 +1,10 @@
+data_1 = fog_times
+data_2 = std_times
+data_3= hf_times
+data = [data_1, data_2, data_3]
+ 
+fig = plt.figure(figsize =(10, 7)) 
+ax = fig.add_axes([0, 0, 1, 1])
+bp = ax.boxplot(data)
+
+plt.show() 

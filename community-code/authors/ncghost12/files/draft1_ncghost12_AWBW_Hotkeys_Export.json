@@ -1,0 +1,206 @@
+{
+  "hotkeys": {
+    "openConfig": {
+      "key": "h"
+    },
+    "select": {
+      "key": "s"
+    },
+    "previousUnit": {
+      "key": "q"
+    },
+    "nextUnit": {
+      "key": "e"
+    },
+    "showMovementRangeIndividual": null,
+    "showMovementRangeCombined": {
+      "key": "shift"
+    },
+    "showMovementRangeWholeArmy": null,
+    "showAttackRangeIndividual": null,
+    "showAttackRangeCombined": {
+      "key": "ctrl"
+    },
+    "showAttackRangeAllIndirects": null,
+    "showAttackRangeWholeArmy": null,
+    "showVisionRangeIndividual": null,
+    "showVisionRangeCombined": {
+      "key": "alt"
+    },
+    "showVisionRangeWholeArmy": null,
+    "endTurn": {
+      "key": "enter"
+    },
+    "tagCO": {
+      "key": "enter",
+      "modifier": "shift"
+    },
+    "activatePower": {
+      "key": " "
+    },
+    "activateSuperPower": {
+      "key": " ",
+      "modifier": "ctrl"
+    },
+    "zoomIn": null,
+    "zoomOut": null,
+    "pause": null,
+    "setDraw": null,
+    "resign": null,
+    "toggleCalculator": {
+      "key": "c"
+    },
+    "selectAttacker": {
+      "key": "a"
+    },
+    "selectDefender": {
+      "key": "d"
+    },
+    "swapUnits": {
+      "key": "s"
+    },
+    "openChat": null,
+    "closeChat": null,
+    "sendChatMessage": null,
+    "openMovementPlanner": {
+      "key": "d",
+      "modifier": "ctrl"
+    },
+    "closeMovementPlanner": {
+      "key": "d",
+      "modifier": "ctrl"
+    },
+    "toggleMaximize": {
+      "key": "f",
+      "modifier": "shift"
+    },
+    "toggleFullscreen": null,
+    "openReplay": {
+      "key": "r",
+      "modifier": "ctrl"
+    },
+    "closeReplay": {
+      "key": "r",
+      "modifier": "ctrl"
+    },
+    "replayFirstTurn": {
+      "key": "home"
+    },
+    "replayLatestTurn": {
+      "key": "end"
+    },
+    "replayForwardTurn": {
+      "key": "arrowdown"
+    },
+    "replayBackwardTurn": {
+      "key": "arrowup"
+    },
+    "replayForwardAction": {
+      "key": "arrowright"
+    },
+    "replayBackwardAction": {
+      "key": "arrowleft"
+    },
+    "fire": {
+      "key": "a"
+    },
+    "launch": {
+      "key": "w"
+    },
+    "explode": {
+      "key": "a"
+    },
+    "capture": {
+      "key": "w"
+    },
+    "supply": {
+      "key": "w"
+    },
+    "wait": {
+      "key": "w"
+    },
+    "repair": {
+      "key": "a"
+    },
+    "load": {
+      "key": "w"
+    },
+    "unload1": {
+      "key": "1"
+    },
+    "unload2": {
+      "key": "2"
+    },
+    "hide": {
+      "key": "f"
+    },
+    "join": {
+      "key": "f"
+    },
+    "delete": null,
+    "deleteConfirm": {
+      "key": "delete"
+    },
+    "buildInfantry": {
+      "key": "w"
+    },
+    "buildMech": {
+      "key": "g"
+    },
+    "buildRecon": null,
+    "buildAPC": null,
+    "buildArtillery": {
+      "key": "r"
+    },
+    "buildTank": {
+      "key": "d"
+    },
+    "buildAntiAir": {
+      "key": "a"
+    },
+    "buildMissile": null,
+    "buildRocket": null,
+    "buildMdTank": {
+      "key": "m"
+    },
+    "buildPiperunner": null,
+    "buildNeotank": {
+      "key": "n"
+    },
+    "buildMegatank": null,
+    "buildTCopter": null,
+    "buildBCopter": {
+      "key": "w"
+    },
+    "buildFighter": {
+      "key": "a"
+    },
+    "buildBomber": {
+      "key": "r"
+    },
+    "buildStealth": null,
+    "buildBlackBomb": null,
+    "buildBlackBoat": {
+      "key": "w"
+    },
+    "buildLander": null,
+    "buildCruiser": {
+      "key": "a"
+    },
+    "buildSub": null,
+    "buildBattleship": {
+      "key": "r"
+    },
+    "buildCarrier": null
+  },
+  "settings": {
+    "fastBuildMenuClose": true,
+    "allowDeleteWithoutCursorOverUnit": false,
+    "allowEndTurnWhileSelected": false,
+    "allowRangeDisplayWhileSelected": true,
+    "allowCalcWhileSelected": true,
+    "allowMiscWhileSelected": true,
+    "showHotkeysInMenus": true,
+    "fullscreenReentry": false
+  }
+}

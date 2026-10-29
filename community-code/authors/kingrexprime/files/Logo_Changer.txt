@@ -1,0 +1,27 @@
+// ==UserScript==
+// @name         Logo Changer
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Replaces the site logo with a custom image
+// @match        https://awbw.amarriner.com/*
+// @icon         https://awbw.amarriner.com/favicon.ico
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // Replace '.logo-class' with the actual selector you found in Step 1
+    const logoSelector = '#logo';
+    const newLogoUrl = 'https://i.ibb.co/VtdsMHm/awbwlogo-X4.gif';
+
+    const logo = document.querySelector(logoSelector);
+    if (logo) {
+        // If the logo is an <img> tag, change the src attribute
+        if (logo.tagName === 'IMG') {
+            logo.src = newLogoUrl;
+        } else {
+            // If it's a div or other element, change the background-image style
+            logo.style.backgroundImage = `url("${newLogoUrl}")`;
+        }
+    }
+})();

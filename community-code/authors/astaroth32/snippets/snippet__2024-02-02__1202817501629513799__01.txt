@@ -1,0 +1,4 @@
+ /*inline-flex adds 15px line above the element on https://awbw.amarriner.com/game.php?games_id= pages*/
+#main {
+  display: flex;
+}

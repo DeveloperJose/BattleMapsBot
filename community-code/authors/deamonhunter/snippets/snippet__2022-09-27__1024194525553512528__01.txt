@@ -1,0 +1,6 @@
+- Repair Unit action ("funds")
+- Power action (Under "playerReplace")
+- Join units action ("newFunds")
+- End turn action ("nextFunds")
+- Build Unit action (This action does not actually have data on funds... weirdly enough)
+- Attack Unit action ("gainedFunds" these are per player and are not exact unlike the others)

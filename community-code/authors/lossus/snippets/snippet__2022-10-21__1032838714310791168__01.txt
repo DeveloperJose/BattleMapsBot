@@ -1,0 +1,27 @@
+  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE
+  SE  XX  XX  XX  XX  XX  XX  XX  XX  XX  XX  XX  XX  XX  XX  XX  SE
+  SE  XX  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  XX  SE
+  SE  XX  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  XX  SE
+  SE  XX  SE  SE  GR  FR  RD  RD  BR  RD  RD  GR  FR 6FC  GR  XX  SE
+  SE  XX  SE  GR  GR  FR  RD  FR  RV  GR  RD  CT  GR  GR15HQ15FC  SE
+  SE  XX  SE  CT  CT  RD  RD  SE  SE  SE  RD  GR  MT  GR  RD15FC  SE
+  SE  XX  SE  GR  GR  RD  GR  SE  SE  SE  RD  CT  MT  CT  RD  GR  SE
+  SE  XX  SE14FC  RD  RD  CT  SE  SE  FR  RD  RD  RD  RD  RD  CT  SE
+  SE  XX  SE14FC14HQ  GR  GR  GR  GR  FR  FR  GR  SE  SE  BR  SE  SE
+  SE  XX  SE  XX  GR10FC  GR  GR  GR  GR  GR  GR  SE  SE  GR  GR  SE
+  SE  XX  SE  XX  SE  SE  MT  CT  MT  FR  CT  GR  BR  GR  CT  CT  SE
+  SE  XX  SE  XX  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE
+  SE  XX  SE  XX  XX  XX  XX  XX  XX  XX  XX  XX  XX  XX  XX  XX  SE
+  SE  XX  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  XX  SE
+  SE  XX  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  XX  SE
+  SE  XX  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  XX  SE
+  SE  XX  SE  SE  GR  FR  RD  RD  BR  RD  RD  GR  FR14FC  GR  XX  SE
+  SE  XX  SE  GR  GR  FR  RD  FR  RV  GR  RD  CT  GR  GR10HQ10FC  SE
+  SE  XX  SE  CT  CT  RD  RD  SE  SE  SE  RD  GR  MT  GR  RD10FC  SE
+  SE  XX  SE  GR  GR  RD  GR  SE  SE  SE  RD  CT  MT  CT  RD  GR  SE
+  SE  XX  SE 6FC  RD  RD  CT  SE  SE  FR  RD  RD  RD  RD  RD  CT  SE
+  SE  XX  SE 6FC 6HQ  GR  GR  GR  GR  FR  FR  GR  SE  SE  BR  SE  SE
+  SE  XX  SE  XX  GR15FC  GR  GR  GR  GR  GR  GR  SE  SE  GR  GR  SE
+  SE  XX  SE  XX  SE  SE  MT  CT  MT  FR  CT  GR  BR  GR  CT  CT  SE
+  SE  XX  XX  XX  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE
+  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE  SE

@@ -1,0 +1,5 @@
+Uncaught (in promise) TypeError: GM.xmlHttpRequest is not a function
+    reloadReplay moz-extension://d9a20d69-8ecf-4df4-a7b8-4f9dabf4b0e7/userscript/inject-into-page/AWBW Replay archive/AWBW Replay archive.user.js:31
+    EventListener.handleEvent* moz-extension://d9a20d69-8ecf-4df4-a7b8-4f9dabf4b0e7/userscript/inject-into-page/AWBW Replay archive/AWBW Replay archive.user.js:48
+    <anonymous> moz-extension://d9a20d69-8ecf-4df4-a7b8-4f9dabf4b0e7/userscript/inject-into-page/AWBW Replay archive/AWBW Replay archive.user.js:54
+    <anonymous> moz-extension://d9a20d69-8ecf-4df4-a7b8-4f9dabf4b0e7/userscript/inject-into-page/AWBW Replay archive/AWBW Replay archive.user.js:54

@@ -1,0 +1,3 @@
+Full Graph = Zigzag Crisscross with P1 ahead at 50% of the points and P2 ahead at the other 50% of the points.
+Half Graph with no offset = P2's graph is strictly higher than P1's graph
+Half Graph with offset = P1 and P2 overtake each other.

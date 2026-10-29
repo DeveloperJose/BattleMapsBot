@@ -1,0 +1,50 @@
+function findTerrainCost(mType, x, y, unitTeam, player) {
+  var _unitMap$x, _unitMap$x$y, _terrainInfo$x, _terrainInfo$x$y, _buildingsInfo$x, _buildingsInfo$x$y, _moveCosts$terrainId, _moveCosts$terrainId$;
+
+  var coName = player.co_name;
+  var power = player.players_co_power_on;
+  var tempWCode = gameWeather.code;
+
+  if (x > maxX - 1 || x < 0 || y < 0 || y > maxY - 1) {
+    return null;
+  } //Mark tile as A for tiles where there is an attackable unit
+
+
+  var squareTeam = (_unitMap$x = unitMap[x]) === null || _unitMap$x === void 0 ? void 0 : (_unitMap$x$y = _unitMap$x[y]) === null || _unitMap$x$y === void 0 ? void 0 : _unitMap$x$y.team;
+
+  if (squareTeam && squareTeam != unitTeam) {
+    return "A";
+  } //No penalty for Olaf in snow
+
+
+  if (coName === "Olaf" && tempWCode === "S") {
+    tempWCode = "C";
+  } //Penalty for Olaf in rain 
+
+
+  if (coName === "Olaf" && tempWCode === "R") {
+    tempWCode = "S";
+  } //No Penalty for Drake in rain
+
+
+  if (coName === "Drake" && tempWCode === "R") {
+    tempWCode = "C";
+  }
+
+  var terrainId = ((_terrainInfo$x = terrainInfo[x]) === null || _terrainInfo$x === void 0 ? void 0 : (_terrainInfo$x$y = _terrainInfo$x[y]) === null || _terrainInfo$x$y === void 0 ? void 0 : _terrainInfo$x$y.terrain_id) || ((_buildingsInfo$x = buildingsInfo[x]) === null || _buildingsInfo$x === void 0 ? void 0 : (_buildingsInfo$x$y = _buildingsInfo$x[y]) === null || _buildingsInfo$x$y === void 0 ? void 0 : _buildingsInfo$x$y.terrain_id);
+  var mCost = (_moveCosts$terrainId = moveCosts[terrainId]) === null || _moveCosts$terrainId === void 0 ? void 0 : (_moveCosts$terrainId$ = _moveCosts$terrainId[tempWCode]) === null || _moveCosts$terrainId$ === void 0 ? void 0 : _moveCosts$terrainId$[mType]; //Black tile for no terrain id
+
+  if (mCost === undefined) {
+    return 0;
+  }
+
+  mCost = parseInt(mCost);
+
+  if (mCost && tempWCode !== "S") {
+    if (coName === "Sturm" || coName === "Lash" && power !== "N") {
+      mCost = 1;
+    }
+  }
+
+  return mCost;
+} 

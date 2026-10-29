@@ -1,0 +1,175 @@
+// ==UserScript==
+// @name         AWBW 占领显示 (Pure Version) 2.4
+// @namespace    https://awbw.amarriner.com/
+// @version      2.4
+// @description  对脚本AWBW capture limit的优化，并针对平均房地产，进行判断，红绿蓝分别为，round大于floor（即玩家房地产很大概率超过平均房地产数），等于，和其他
+// @match        https://awbw.amarriner.com/game.php?games_id*
+// @icon         https://awbw.amarriner.com/terrain/aw1/neutralcity.gif
+// @author       GelSnow（https://discord.gg/GHDqN23Y）
+// @license      MIT
+// @grant        none
+// @inject-into  page
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    // 获取玩家数量
+    let playerCount = document.querySelectorAll('.player-overview-container').length;
+
+    // 获取所有可占领的城市、总部、基地、港口的 ID
+    let cities = document.querySelectorAll(
+        '.game-building>img:first-child[src*="city.gif"], ' +
+        '.game-building>img:first-child[src*="hq.gif"], ' +
+        '.game-building>img:first-child[src*="base.gif"], ' +
+        '.game-building>img:first-child[src*="port.gif"], ' +
+        '.game-building>img:first-child[src*="city"], ' +
+        '.game-building>img:first-child[src*="hq_"], ' +
+        '.game-building>img:first-child[src*="base_"], ' +
+        '.game-building>img:first-child[src*="port_"]'
+    );
+    let cityIds = Array.from(cities, city => +city.parentNode.getAttribute('data-building-id'));
+    let totalCityCount = cityIds.length; // 记录总的房地产数量
+
+    // 获取通讯塔 ID
+    let comTowers = document.querySelectorAll('.game-building>img:first-child[src*="comtower"]');
+    let comTowerIDs = Array.from(comTowers, tower => +tower.parentNode.getAttribute('data-building-id'));
+
+    // 获取占领上限
+    let captureLimit = Number(document.querySelectorAll('#showinfo td')[22]?.innerText) || 0;
+
+    let playerOverviews = document.querySelectorAll('.player-overview-container');
+    let playerTables = {};
+
+    // 计算均衡的房地产数量
+    function equalincome() {
+        if (playerCount > 0) {
+            let floatValue = totalCityCount / playerCount;
+            let flooredValue = Math.floor(floatValue);
+            let roundedValue = Math.round(floatValue);
+
+            // 如果浮动值与向下取整结果相同，则不设置颜色
+            if (floatValue === flooredValue) {
+                return {
+                    value: flooredValue,
+                    color: undefined  // 避免错误覆盖默认颜色
+                };
+            } else {
+                let color = 'blue';  // 默认蓝色
+                if (roundedValue > flooredValue) {
+                    color = 'red';  // 四舍五入结果大于向下取整
+                } else if (roundedValue === flooredValue) {
+                    color = 'green';  // 四舍五入等于向下取整
+                }
+                return {
+                    value: flooredValue,
+                    color: color
+                };
+            }
+        } else {
+            return {
+                value: '∞',
+                color: 'red'  // 用红色表示无玩家
+            };
+        }
+    }
+
+    // 计算玩家的塔数和房地产数
+    let playerProperties = {};
+    let playerTowers = {};
+
+    for (let i in buildingsInfo) {
+        for (let z in buildingsInfo[i]) {
+            let building = buildingsInfo[i][z];
+            let playerID = building.buildings_players_id;
+            if (playerID) {
+                if (cityIds.includes(building.buildings_id)) {
+                    playerProperties[playerID] = (playerProperties[playerID] || 0) + 1;
+                }
+                if (comTowerIDs.includes(building.buildings_id)) {
+                    playerTowers[playerID] = (playerTowers[playerID] || 0) + 1;
+                }
+            }
+        }
+    }
+
+    // 构建和更新玩家表格
+    playerOverviews.forEach(playerO => {
+        let playerID = playerO.id.split('player')[1];
+        let overviewMain = playerO.querySelector('.player-overview-main');
+
+        let statsDiv = document.createElement('div');
+        statsDiv.classList.add('flex', 'row', 'hv-center');
+        statsDiv.style.gap = '3px';
+        statsDiv.style.alignItems = 'flex-end';
+
+        // 显示塔的统计信息
+        if (comTowerIDs.length > 0) {
+            let towerImg = document.createElement('img');
+            towerImg.src = 'https://awbw.amarriner.com/terrain/aw1/neutralcomtower.gif';
+            let towerSpan = document.createElement('span');
+            towerSpan.className = 'PTowers-SumTowers';
+            towerSpan.textContent = `${playerTowers[playerID] || 0}/${comTowerIDs.length}`;
+            statsDiv.appendChild(towerImg);
+            statsDiv.appendChild(towerSpan);
+        }
+
+        // 显示房地产的统计信息
+        let propertyImg = document.createElement('img');
+        propertyImg.src = 'https://awbw.amarriner.com/terrain/aw1/neutralcity.gif';
+        let propertySpan = document.createElement('span');
+        propertySpan.className = 'PProperties-CaptureLimit';
+        let captureText = captureLimit > 0 ? `/${captureLimit}` : '';
+        propertySpan.textContent = `(${equalincome().value})${playerProperties[playerID] || 0}${captureText}`;
+
+        statsDiv.appendChild(propertyImg);
+        statsDiv.appendChild(propertySpan);
+
+        overviewMain.appendChild(statsDiv);
+        playerTables[playerID] = statsDiv;
+    });
+
+    // 节流函数，防止频繁调用
+    function throttle(func, delay) {
+        let lastCall = 0;
+        return function () {
+            let now = Date.now();
+            if (now - lastCall >= delay) {
+                func.apply(this, arguments);
+                lastCall = now;
+            }
+        };
+    }
+
+    // 更新数据函数
+    function updateData() {
+        for (let playerID in playerTables) {
+            let statsDiv = playerTables[playerID];
+
+            // 更新塔的数据
+            if (comTowerIDs.length > 0) {
+                statsDiv.querySelector('.PTowers-SumTowers').textContent = `${playerTowers[playerID] || 0}/${comTowerIDs.length}`;
+            }
+
+            // 更新房地产的数据
+            let captureText = captureLimit > 0 ? `/${captureLimit}` : '';
+            let equalIncomeData = equalincome();  // 获取最新的数据
+            let propertyText = `(${equalIncomeData.value})${playerProperties[playerID] || 0}${captureText}`;
+
+            let propertySpan = statsDiv.querySelector('.PProperties-CaptureLimit');
+            propertySpan.textContent = propertyText;
+
+            // 只有当 `color` 不是 undefined 时才更新颜色
+            if (equalIncomeData.color !== undefined) {
+                propertySpan.style.color = equalIncomeData.color;
+            }
+        }
+    }
+
+    // 使用节流的方式调用 updateData
+    const throttledUpdateData = throttle(updateData, 100); // 每隔 100 毫秒最多调用一次
+
+    const propertyObserver = new MutationObserver(() => throttledUpdateData());
+    propertyObserver.observe(document, { childList: true, subtree: true });
+
+})();

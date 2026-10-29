@@ -1,0 +1,19 @@
+ async startTurn(performRepairs = false) {
+    let totalRepairCost = getTotalRepairCost(this.liveInfo.repairing_units || [], this.playerInfo);
+    this.liveInfo.funds -= totalRepairCost;
+    this.liveInfo.funds += this.liveInfo.income;
+
+    if (performRepairs && this.liveInfo.repairing_units) {
+      inRepairs = true;
+      for (let unit of this.liveInfo.repairing_units) {
+        await this.repairUnit(unit);
+      }
+    }
+    inRepairs = false;
+
+    this.liveInfo.is_current_turn = true;
+    this.liveInfo.co_power = "N";
+    this.playerInfo.players_co_power_on = this.liveInfo.co_power;
+    this.updateHtml();
+    this.copUpdateCallback();
+  }

@@ -1,0 +1,7 @@
+let socketOnMessageOld = webSocket.onmessage;
+webSocket.onmessage = function (jsonData) {
+    json = JSON.parse(jsonData.data);
+    if (json.err == true) {
+    }
+    socketOnMessageOld(jsonData);
+};

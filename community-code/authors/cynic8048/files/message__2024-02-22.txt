@@ -1,0 +1,331 @@
+System.AggregateException: Failed to parse replay with path: C:\Users\Néstor\Downloads\1116481.zip (Failed to parse Replay Action #1 on Turn 8. Day 5, Active Player 2651581 (Unknown replay action type: AttackSeam
+Json String:
+{
+  "action": "AttackSeam",
+  "Move": {
+    "action": "Move",
+    "unit": {
+      "2651581": {
+        "0": 149067753,
+        "units_id": 149067753,
+        "units_games_id": 1116481,
+        "units_players_id": 2651581,
+        "units_name": "Infantry",
+        "units_movement_points": 3,
+        "units_vision": 2,
+        "units_fuel": 96,
+        "units_fuel_per_turn": 0,
+        "units_sub_dive": "N",
+        "units_ammo": 0,
+        "units_short_range": 0,
+        "units_long_range": 0,
+        "units_second_weapon": "N",
+        "units_symbol": "A",
+        "units_cost": 1000,
+        "units_movement_type": "F",
+        "units_x": 2,
+        "units_y": 11,
+        "units_moved": 1,
+        "units_capture": 0,
+        "units_fired": 0,
+        "units_hit_points": 10,
+        "units_cargo1_units_id": 0,
+        "units_cargo2_units_id": 0,
+        "units_carried": "N",
+        "countries_code": "os"
+      },
+      "2651582": ""
+    },
+    "paths": {
+      "2651581": [
+        {
+          "unit_visible": true,
+          "x": 1,
+          "y": 9
+        },
+        {
+          "unit_visible": true,
+          "x": 2,
+          "y": 9
+        },
+        {
+          "unit_visible": true,
+          "x": 2,
+          "y": 10
+        },
+        {
+          "unit_visible": true,
+          "x": 2,
+          "y": 11
+        }
+      ]
+    },
+    "dist": 3,
+    "trapped": false,
+    "discovered": {
+      "2651581": {
+        "buildings": [
+          {
+            "0": 56051726,
+            "buildings_id": 56051726,
+            "buildings_x": 4,
+            "buildings_y": 11,
+            "buildings_capture": 20,
+            "terrain_id": 34,
+            "terrain_name": "Neutral City",
+            "terrain_defense": 3,
+            "is_occupied": false,
+            "buildings_players_id": null,
+            "buildings_team": null
+          }
+        ]
+      }
+    }
+  },
+  "AttackSeam": {
+    "action": "AttackSeam",
+    "unit": {
+      "2651581": {
+        "hasVision": true,
+        "combatInfo": {
+          "units_ammo": 0,
+          "units_id": 149067753,
+          "units_x": 2,
+          "units_y": 11
+        }
+      },
+      "2651582": {
+        "hasVision": false,
+        "combatInfo": "?"
+      }
+    },
+    "buildings_hit_points": 98,
+    "buildings_terrain_id": 114,
+    "seamX": 1,
+    "seamY": 11
+  }
+}))
+ ---> System.AggregateException: Failed to parse Replay Action #1 on Turn 8. Day 5, Active Player 2651581 (Unknown replay action type: AttackSeam
+Json String:
+{
+  "action": "AttackSeam",
+  "Move": {
+    "action": "Move",
+    "unit": {
+      "2651581": {
+        "0": 149067753,
+        "units_id": 149067753,
+        "units_games_id": 1116481,
+        "units_players_id": 2651581,
+        "units_name": "Infantry",
+        "units_movement_points": 3,
+        "units_vision": 2,
+        "units_fuel": 96,
+        "units_fuel_per_turn": 0,
+        "units_sub_dive": "N",
+        "units_ammo": 0,
+        "units_short_range": 0,
+        "units_long_range": 0,
+        "units_second_weapon": "N",
+        "units_symbol": "A",
+        "units_cost": 1000,
+        "units_movement_type": "F",
+        "units_x": 2,
+        "units_y": 11,
+        "units_moved": 1,
+        "units_capture": 0,
+        "units_fired": 0,
+        "units_hit_points": 10,
+        "units_cargo1_units_id": 0,
+        "units_cargo2_units_id": 0,
+        "units_carried": "N",
+        "countries_code": "os"
+      },
+      "2651582": ""
+    },
+    "paths": {
+      "2651581": [
+        {
+          "unit_visible": true,
+          "x": 1,
+          "y": 9
+        },
+        {
+          "unit_visible": true,
+          "x": 2,
+          "y": 9
+        },
+        {
+          "unit_visible": true,
+          "x": 2,
+          "y": 10
+        },
+        {
+          "unit_visible": true,
+          "x": 2,
+          "y": 11
+        }
+      ]
+    },
+    "dist": 3,
+    "trapped": false,
+    "discovered": {
+      "2651581": {
+        "buildings": [
+          {
+            "0": 56051726,
+            "buildings_id": 56051726,
+            "buildings_x": 4,
+            "buildings_y": 11,
+            "buildings_capture": 20,
+            "terrain_id": 34,
+            "terrain_name": "Neutral City",
+            "terrain_defense": 3,
+            "is_occupied": false,
+            "buildings_players_id": null,
+            "buildings_team": null
+          }
+        ]
+      }
+    }
+  },
+  "AttackSeam": {
+    "action": "AttackSeam",
+    "unit": {
+      "2651581": {
+        "hasVision": true,
+        "combatInfo": {
+          "units_ammo": 0,
+          "units_id": 149067753,
+          "units_x": 2,
+          "units_y": 11
+        }
+      },
+      "2651582": {
+        "hasVision": false,
+        "combatInfo": "?"
+      }
+    },
+    "buildings_hit_points": 98,
+    "buildings_terrain_id": 114,
+    "seamX": 1,
+    "seamY": 11
+  }
+})
+ ---> System.Exception: Unknown replay action type: AttackSeam
+Json String:
+{
+  "action": "AttackSeam",
+  "Move": {
+    "action": "Move",
+    "unit": {
+      "2651581": {
+        "0": 149067753,
+        "units_id": 149067753,
+        "units_games_id": 1116481,
+        "units_players_id": 2651581,
+        "units_name": "Infantry",
+        "units_movement_points": 3,
+        "units_vision": 2,
+        "units_fuel": 96,
+        "units_fuel_per_turn": 0,
+        "units_sub_dive": "N",
+        "units_ammo": 0,
+        "units_short_range": 0,
+        "units_long_range": 0,
+        "units_second_weapon": "N",
+        "units_symbol": "A",
+        "units_cost": 1000,
+        "units_movement_type": "F",
+        "units_x": 2,
+        "units_y": 11,
+        "units_moved": 1,
+        "units_capture": 0,
+        "units_fired": 0,
+        "units_hit_points": 10,
+        "units_cargo1_units_id": 0,
+        "units_cargo2_units_id": 0,
+        "units_carried": "N",
+        "countries_code": "os"
+      },
+      "2651582": ""
+    },
+    "paths": {
+      "2651581": [
+        {
+          "unit_visible": true,
+          "x": 1,
+          "y": 9
+        },
+        {
+          "unit_visible": true,
+          "x": 2,
+          "y": 9
+        },
+        {
+          "unit_visible": true,
+          "x": 2,
+          "y": 10
+        },
+        {
+          "unit_visible": true,
+          "x": 2,
+          "y": 11
+        }
+      ]
+    },
+    "dist": 3,
+    "trapped": false,
+    "discovered": {
+      "2651581": {
+        "buildings": [
+          {
+            "0": 56051726,
+            "buildings_id": 56051726,
+            "buildings_x": 4,
+            "buildings_y": 11,
+            "buildings_capture": 20,
+            "terrain_id": 34,
+            "terrain_name": "Neutral City",
+            "terrain_defense": 3,
+            "is_occupied": false,
+            "buildings_players_id": null,
+            "buildings_team": null
+          }
+        ]
+      }
+    }
+  },
+  "AttackSeam": {
+    "action": "AttackSeam",
+    "unit": {
+      "2651581": {
+        "hasVision": true,
+        "combatInfo": {
+          "units_ammo": 0,
+          "units_id": 149067753,
+          "units_x": 2,
+          "units_y": 11
+        }
+      },
+      "2651582": {
+        "hasVision": false,
+        "combatInfo": "?"
+      }
+    },
+    "buildings_hit_points": 98,
+    "buildings_terrain_id": 114,
+    "seamX": 1,
+    "seamY": 11
+  }
+}
+   at AWBWApp.Game.API.Replay.ReplayActionDatabase.ParseJObjectIntoReplayAction(JObject jObject, ReplayData replayData, TurnData turnData)
+   at AWBWApp.Game.API.Replay.AWBWJsonReplayParser.readReplayActionTurn(ReplayData replayData, ReadOnlySpan`1 text, Int32& textIndex)
+   --- End of inner exception stack trace ---
+   at AWBWApp.Game.API.Replay.AWBWJsonReplayParser.readReplayActionTurn(ReplayData replayData, ReadOnlySpan`1 text, Int32& textIndex)
+   at AWBWApp.Game.API.Replay.AWBWJsonReplayParser.readReplayActions(ReplayData replayData, ReadOnlySpan`1 text)
+   at AWBWApp.Game.API.Replay.AWBWJsonReplayParser.ParseReplayZip(ZipArchive zipArchive)
+   at AWBWApp.Game.IO.ReplayManager.ParseAndStoreReplay(String path)
+   --- End of inner exception stack trace ---
+   at AWBWApp.Game.IO.ReplayManager.ParseAndStoreReplay(String path)
+   at AWBWApp.Game.AWBWAppGameBase.ImportFiles(ProgressNotification updateNotification, String[] paths)

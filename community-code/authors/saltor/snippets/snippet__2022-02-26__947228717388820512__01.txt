@@ -1,0 +1,1 @@
+/terrain/${theme}/${country_code}${unit_type}.gif

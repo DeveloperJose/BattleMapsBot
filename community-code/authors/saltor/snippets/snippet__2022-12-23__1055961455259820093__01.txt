@@ -1,0 +1,15 @@
+System.AggregateException: Failed to parse replay with path: /Users/path/to/replay.zip (Access to the path '/Users/path/to/replay.zip' is denied.)
+ ---> System.UnauthorizedAccessException: Access to the path '/Users/path/to/replay.zip' is denied.
+ ---> System.IO.IOException: Permission denied
+   --- End of inner exception stack trace ---
+   at Interop.ThrowExceptionForIoErrno(ErrorInfo errorInfo, String path, Boolean isDirectory, Func`2 errorRewriter)
+   at Interop.CheckIo(Error error, String path, Boolean isDirectory, Func`2 errorRewriter)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String path, OpenFlags flags, Int32 mode)
+   at Microsoft.Win32.SafeHandles.SafeFileHandle.Open(String fullPath, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.Strategies.OSFileStreamStrategy..ctor(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)
+   at System.IO.Strategies.FileStreamHelpers.ChooseStrategy(FileStream fileStream, String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, Int64 preallocationSize)
+   at System.IO.FileStream..ctor(String path, FileMode mode)
+   at AWBWApp.Game.IO.ReplayManager.ParseAndStoreReplay(String path) in /Users/deamon/Documents/GitHub/AWBW-Replay-Player/AWBWApp.Game/IO/ReplayManager.cs:line 405
+   --- End of inner exception stack trace ---
+   at AWBWApp.Game.IO.ReplayManager.ParseAndStoreReplay(String path) in /Users/deamon/Documents/GitHub/AWBW-Replay-Player/AWBWApp.Game/IO/ReplayManager.cs:line 459
+   at AWBWApp.Game.AWBWAppGameBase.ImportFiles(ProgressNotification updateNotification, String[] paths) in /Users/deamon/Documents/GitHub/AWBW-Replay-Player/AWBWApp.Game/AWBWAppGameBase.cs:line 182

@@ -1,0 +1,42 @@
+async function loadThisShit() {
+    if (typeof Vue === "undefined") {
+        await loadScript("js/vue.js");
+    }
+    await loadScript("js/tinyqueue.js");
+    if (typeof _ === "undefined") {
+        await loadScript("js/lodash.min.js");
+    }
+
+    if (window.location.pathname.match("prevmaps.php")) {
+        await waitForMapData();
+        initPrevmaps();
+    } else if (window.location.pathname.match("editmap.php")) {
+        initEditmap(); // already has its own internal wait loop
+    }
+}
+
+function waitForMapData() {
+    const timeoutMs = 8000;
+    const intervalMs = 100;
+    const startTime = Date.now();
+
+    return new Promise((resolve) => {
+        const check = setInterval(() => {
+            const terrainReady = typeof terrainInfo !== "undefined" && Object.keys(terrainInfo).length > 0;
+            const buildingsReady = typeof buildingsInfo !== "undefined";
+            const timedOut = Date.now() - startTime > timeoutMs;
+
+            if (terrainReady && buildingsReady) {
+                clearInterval(check);
+                resolve();
+                return;
+            }
+
+            if (timedOut) {
+                clearInterval(check);
+                alert("Map Analyzer: terrain data never loaded (timed out after " + timeoutMs + "ms). Try reloading the page — if this keeps happening, please report it.");
+                resolve();
+            }
+        }, intervalMs);
+    });
+}

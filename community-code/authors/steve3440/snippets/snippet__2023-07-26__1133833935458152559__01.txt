@@ -1,0 +1,9 @@
+(function () {
+let u_vis = 'visible';
+const hide_toggle = $('<div style="width: 34px; margin-left: 5px; display: flex;" class="game-tools-btn"><img src="terrain/aw1/gestealth.gif" /><span class="game-tools-btn-text small_test">Hide/show units</span></div>').click(function () {
+    u_vis = (u_vis === 'visible' ? 'hidden' : 'visible');
+    $('.sprite, .unit-ricon, .unit-licon, .unit-ricon-anifuel, unit-ricon-aniammo').css('visibility', u_vis);
+    this.getElementsByTagName('img')[0].src = (u_vis === 'visible' ? 'terrain/aw1/gestealth.gif' : 'terrain/aw1/gs_gestealth.gif');
+})
+$('#game-menu-controls').append($('<section></section>').append(hide_toggle));
+})();

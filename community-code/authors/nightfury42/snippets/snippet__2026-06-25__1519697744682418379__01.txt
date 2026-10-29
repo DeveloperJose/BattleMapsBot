@@ -1,0 +1,1 @@
+        return this.unitData().cost * (parseInt(this.hp || 10) / 10); 

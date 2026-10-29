@@ -1,0 +1,1 @@
+$ open AWBWReplayPlayer.app/Contents/MacOS/AWBW\ Replay\ Player

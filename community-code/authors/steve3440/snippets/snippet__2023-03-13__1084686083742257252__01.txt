@@ -1,0 +1,4 @@
+let duration = '1.1s',
+    brightness = '150%',
+    player = 0;
+let se=document.createElement('style'); se.textContent=`.copglow { animation: ${duration} ease-in infinite alternate glowup; } @keyframes glowup { from { filter: brightness(100%); } to { filter: brightness(${brightness}); } }`; document.head.append(se); const uids = Object.values(Object.values(playersUnits)[player]); uids.map(i=>document.querySelector(`[data-unit-id="${i}"]`).firstElementChild.classList.add('copglow'));

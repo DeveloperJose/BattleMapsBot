@@ -1,0 +1,1 @@
+document.addEventListener('keyup',e=>e.code=='KeyB'&&document.querySelectorAll('.game-unit').forEach(n=>n.hidden=!n.hidden))

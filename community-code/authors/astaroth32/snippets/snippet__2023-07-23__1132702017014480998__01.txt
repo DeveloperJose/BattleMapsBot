@@ -1,0 +1,9 @@
+// Your CSS as text
+const styles = `.game-stats-units-list li {
+  display: unset;
+}
+`
+
+const styleSheet = document.createElement("style")
+styleSheet.innerText = styles
+document.head.appendChild(styleSheet)

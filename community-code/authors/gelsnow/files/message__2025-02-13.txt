@@ -1,0 +1,192 @@
+// ==UserScript==
+// @name         AWBW指挥技充能显示,不对回放进行额外处理 v1.6789
+// @namespace    https://greasyfork.org/users/1062240
+// @version      1.6789
+// @description  动态显示指挥技和超级指挥技条的充能剩余值，变色并添加星星效果
+// @author       Custom
+// @match        https://awbw.amarriner.com/*?games_id*
+// @match        https://awbw.amarriner.com/*?replays_id*
+// @icon         https://www.warsworldnews.com/aw/images/icons/power.png
+// @grant        none
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    const PLAYER_OVERVIEW_SELECTOR = '.player-overview-container';
+    const POWER_BAR_SELECTOR = '.power-bar';
+
+    // 节流函数：在指定时间内，只会执行一次操作
+    function throttle(fn, wait) {
+        let lastTime = 0;
+        return function (...args) {
+            const now = Date.now();
+            if (now - lastTime >= wait) {
+                lastTime = now;
+                fn(...args);
+            }
+        };
+    }
+
+    function init() {
+        const playerOverviews = document.querySelectorAll(PLAYER_OVERVIEW_SELECTOR);
+        playerOverviews.forEach((playerOverview) => {
+            const playerInfoList = playerOverview.querySelector('.player-overview-info ul');
+            const powerBars = playerOverview.querySelectorAll(POWER_BAR_SELECTOR);
+
+            if (playerInfoList && powerBars) {
+                const energyDisplay = createEnergyDisplay();
+                playerOverview.energyDisplay = energyDisplay; // 绑定到 playerOverview
+                playerInfoList.appendChild(energyDisplay.copListItem);
+                playerInfoList.appendChild(energyDisplay.scopListItem);
+
+                powerBars.forEach(powerBar => {
+                    updateEnergyValues(powerBar, energyDisplay); // 使用已存在的 energyDisplay
+                });
+
+                // 监听 scop-value 的变化
+                const scopValueElements = playerOverview.querySelectorAll('.scop-value');
+                scopValueElements.forEach(scopValueElement => {
+                    const observer = new MutationObserver(() => {
+                        updateAllPlayersEnergy();
+                    });
+                    observer.observe(scopValueElement, { characterData: true, subtree: true });
+                });
+
+                // 监听 powerBar 的变化，防止动画被误删
+                const observer = new MutationObserver(() => {
+                    updateAllPlayersEnergy();
+                });
+                observer.observe(playerOverview, { childList: true, subtree: true });
+            }
+        });
+    }
+
+    function createEnergyDisplay() {
+        const copListItem = document.createElement('li');
+        const copIcon = document.createElement('img');
+        copIcon.src = 'https://awbw.amarriner.com/terrain/aw1/redstar.gif';
+        copListItem.appendChild(copIcon);
+
+        const PRemaining = document.createElement('span');
+        PRemaining.className = 'COPRemaining';
+        copListItem.appendChild(PRemaining);
+
+        const scopListItem = document.createElement('li');
+        const scopIcon = document.createElement('img');
+        scopIcon.src = 'https://awbw.amarriner.com/terrain/aw1/bluestar.gif';
+        scopListItem.appendChild(scopIcon);
+
+        const SPRemaining = document.createElement('span');
+        SPRemaining.className = 'SCOPRemaining';
+        scopListItem.appendChild(SPRemaining);
+
+        return {
+            copListItem,
+            scopListItem,
+            PRemaining,
+            SPRemaining,
+        };
+    }
+
+    function updateEnergyValues(powerBar, energyDisplay) {
+        // 计算 cop 和 scop 的剩余值
+        const copValueCurrent = parseFloat(powerBar.querySelector('.cop-value')?.textContent || '0');
+        const copValueMax = parseFloat(powerBar.querySelector('.cop-max-value')?.textContent || '1');
+        const scopValueCurrent = parseFloat(powerBar.querySelector('.scop-value')?.textContent || '0');
+        const scopValueMax = parseFloat(powerBar.querySelector('.scop-max-value')?.textContent || '1');
+
+        const copRemaining = Math.max(0, copValueMax - copValueCurrent);
+        const scopRemaining = Math.max(0, scopValueMax - scopValueCurrent);
+
+        // 如果是 main-co-bar 区域，显示值
+        if (powerBar.closest('.main-co-bar')) {
+            energyDisplay.PRemaining.textContent = copRemaining;
+            energyDisplay.SPRemaining.textContent = scopRemaining;
+        }
+
+        // 更新能量条样式
+        updatePowerBarStyle(powerBar, copRemaining, scopRemaining);
+    }
+
+    function updatePowerBarStyle(powerBar, copRemaining, scopRemaining) {
+        const copStars = powerBar.querySelectorAll('.cop-star');
+        const scopStars = powerBar.querySelectorAll('.scop-star');
+
+        toggleAnimation(copStars, copRemaining);
+        toggleAnimation(scopStars, scopRemaining);
+    }
+
+    function toggleAnimation(stars, remaining) {
+        stars.forEach(star => {
+            if (remaining === 0) {
+                star.classList.add('anim-power-bar');
+            } else {
+                star.classList.remove('anim-power-bar');
+            }
+        });
+    }
+
+    // 更新所有玩家的能量条
+    function updateAllPlayersEnergy() {
+        const playerOverviews = document.querySelectorAll(PLAYER_OVERVIEW_SELECTOR);
+        playerOverviews.forEach((playerOverview) => {
+            const powerBars = playerOverview.querySelectorAll(POWER_BAR_SELECTOR);
+            const energyDisplay = playerOverview.energyDisplay;
+            powerBars.forEach(powerBar => {
+                updateEnergyValues(powerBar, energyDisplay); // 更新当前玩家能量条
+            });
+        });
+    }
+
+    // 新增：延迟更新，避免重复检测卡死
+    const delayedUpdate = throttle(function () {
+        const powerBars = document.querySelectorAll(POWER_BAR_SELECTOR);
+        powerBars.forEach(powerBar => {
+            const energyDisplay = createEnergyDisplay();
+            updateEnergyValues(powerBar, energyDisplay);
+        });
+    }, 100);  // 每 100 毫秒最多执行一次更新
+
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes sine-bounce {
+            0%, 100% { transform: scale(1.6); }
+            25%, 75% { transform: scale(1); }
+            50% { transform: scale(0.625); }
+        }
+
+        .cop-star.anim-power-bar .power-star-percent {
+            background: rgba(255, 0, 0, 0.6);
+            border-top: 4px solid rgba(50, 50, 50, 1);
+            border-bottom: 4px solid rgba(50, 50, 50, 1);
+            box-shadow:
+                0 0 6px rgba(80, 80, 80, 0.8),
+                0 0 12px rgba(120, 120, 120, 0.6),
+                inset 0 0 4px rgba(30, 30, 30, 0.9),
+                0 0 10px rgba(255, 255, 255, 1);
+            animation: blink 0.8s infinite, sine-bounce 0.8s infinite;
+        }
+
+        .scop-star.anim-power-bar .power-star-percent {
+            background: rgba(0, 0, 255, 0.6);
+            border-top: 4px solid rgba(50, 50, 50, 1);
+            border-bottom: 4px solid rgba(50, 50, 50, 1);
+            box-shadow:
+                0 0 6px rgba(80, 80, 80, 0.8),
+                0 0 12px rgba(120, 120, 120, 0.6),
+                inset 0 0 4px rgba(30, 30, 30, 0.9),
+                0 0 10px rgba(255, 255, 255, 1);
+            animation: blink 0.8s infinite, sine-bounce 0.8s infinite;
+        }
+    `;
+    document.head.appendChild(style);
+
+    init();
+
+})();

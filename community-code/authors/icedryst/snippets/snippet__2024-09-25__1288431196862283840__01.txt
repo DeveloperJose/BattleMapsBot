@@ -1,0 +1,2 @@
+oldFun = actionHandlers.Move;
+actionHandlers.Move = () => {oldFun(); newFun()}

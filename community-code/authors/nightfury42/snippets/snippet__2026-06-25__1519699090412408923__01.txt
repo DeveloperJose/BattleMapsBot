@@ -1,0 +1,17 @@
+  updateCharge(unit, newHp) {
+    let prevHp = unit.hp || '10';
+    let hpDiff = parseInt(prevHp) - parseInt(newHp);
+    let cost = unit.unitData().cost * hpDiff;
+    if (this.playerInfo.countries_code == unit.country.code) {
+      this.playerInfo.players_co_power += cost;
+    }
+    else {
+      this.playerInfo.players_co_power += cost / 2;
+    }
+
+    let co = kCosByName[this.playerInfo.co_name];
+    this.playerInfo.players_co_power = Math.min(this.playerInfo.players_co_power, this.playerInfo.players_co_max_spower);
+
+    this.liveInfo.current_charge = this.playerInfo.players_co_power;
+    this.updateHtml();
+  }

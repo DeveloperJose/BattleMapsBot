@@ -1,0 +1,3 @@
+ for (var i = 0; i < nNodes; i++) {
+    visited.push(false);
+    dist.push(Infinity); 

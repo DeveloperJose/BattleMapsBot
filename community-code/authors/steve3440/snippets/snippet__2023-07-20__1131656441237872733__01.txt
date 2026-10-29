@@ -1,0 +1,1 @@
+fetchStatsInfo(currentStatsPId);gameStatsScreen.style.display="flex";let t=document.querySelector('.game-stats'),s=t.style;document.querySelector('#gamecontainer').appendChild(t);s.position='absolute';s.left='2px';s.top='25%';s.width='25%';

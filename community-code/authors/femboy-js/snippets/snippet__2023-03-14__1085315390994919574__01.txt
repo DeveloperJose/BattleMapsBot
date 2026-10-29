@@ -1,0 +1,18 @@
+pseudoCode below
+click somewhere
+  if unit
+    showBlueTiles
+      selectBlueTile
+      if tile already has unit AND its not the same tile from where the unit started GO BACK TO STEP 1
+          move unit render to tile
+          showMenu  
+          if infantry AND on property that isn't of the same country as unit
+            show capture
+            click on capture option
+              newTile.propertyCapture = 0 + unitHP (10 = 100)
+              if propertyCapture >= 200
+                set property to unit's country
+              set unit to move
+              if initialTile !== newTile
+                 initialTile.propertyCapture = 0
+            

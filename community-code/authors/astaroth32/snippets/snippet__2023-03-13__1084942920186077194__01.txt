@@ -1,0 +1,17 @@
+<div id="build-menu" style="display: block; left: 241px; top: 88px;">
+    <ul id="units">
+        <li>Infantry</li>
+        <li>Mech</li>
+        <li>Recon</li>
+        <li>APC</li>
+        <li>Artillery</li>
+        <li>Tank</li>
+        <li>Anti-Air</li>
+        <li>Missile</li>
+        <li>Rocket</li>
+        <li>Md.Tank</li>
+        <li>Piperunner</li>
+        <li>Neotank</li>
+        <li>Mega Tank</li>
+    </ul>
+</div>

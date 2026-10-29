@@ -1,12 +1,18 @@
 # BattleMaps Bot
 
-A discord bot for previewing Advance Wars By Web (AWBW) maps.
+A Discord bot for previewing Advance Wars By Web (AWBW) maps.
 
-## Features
+![BattleMaps Bot map preview](battlemaps_preview.png)
 
-- `/map <awbw_id>`: Generates a rich preview of an AWBW map, including a rendered image, property counts, and predeployed unit lists.
-- **Link Detection**: Automatically generates a map preview when an AWBW map link is posted in chat.
-- **Admin Commands**: A suite of owner-only commands including `/reload`, `/sync`, and `/map_refresh` for maintenance.
+## What it does
+
+BattleMaps Bot brings AWBW maps into Discord. Paste a map link or run `/map <awbw_id>` and it replies with a rendered preview, property counts, and the map's predeployed units. It can also watch chat and preview map links as they appear.
+
+Server owners get a small set of maintenance commands for reloading, syncing, and refreshing map data.
+
+## Community code archive
+
+Scripts, snippets, and project links shared by the AWBW community in the "Community Development" thread are indexed in [community-code/README.md](community-code/README.md). The archive excludes raw messages, media, and archives; see [community-code/NOTICE.md](community-code/NOTICE.md) for attribution and removal requests.
 
 ## Setup
 
@@ -44,8 +50,8 @@ The bot requires the following permissions in the server/channel to function:
 
 If the bot doesn't respond to links, check that it has both **View Channels** and **Send Messages** permissions in the channel.
 
-## Persistent statistics
+## Map preview tabs and league tiers
 
-API request totals, render/generation counts, duration averages and records, and rolling API windows are saved to SQLite after each event. Set `STATS_DB_PATH` to override the default `data/stats.db`. Docker Compose bind-mounts this directory from `apps/battlemaps-bot/data`, preserving statistics through restarts, rebuilds, and container replacement. Existing Restic backups include this directory under `/data/website`.
+Tabs are Preview, League Info, Properties. League Info is shown only for maps in the current league snapshot; other maps retain Preview and Properties. Map titles omit the [Map] prefix. The map data fetch time appears in the embed footer using a native Discord timestamp. The league settings fetch age appears as a Discord relative timestamp in the embed description. Both reflect successful fetch times, so reading cached data does not reset the age.
 
-Totals cover all recorded runs; uptime remains the current process uptime. Historical in-memory counters from before persistence was deployed cannot be recovered. API timestamps older than 24 hours are pruned; lifetime totals are retained.
+The public league API snapshot is shared across all maps and saved to `data/league.db` beside the persistent stats database (override with `LEAGUE_DB_PATH`). A background task checks every five minutes and refreshes data after six hours. The first preview can also populate an empty cache. Concurrent requests share one refresh; failures retain the last successful snapshot and retry after five minutes. Maps absent from the current pool have no League Info tab, regardless of historical category labels. The tab shows enabled CO tiers and the setup-specific unit bans, unit limit, and capture limit.

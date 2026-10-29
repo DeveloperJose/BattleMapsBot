@@ -1,0 +1,4 @@
+  applyCSS(gamemapContainer, {
+    height: parseInt(sessionStorage[dimID + "Height"]) * scale + "px",
+    width: parseInt(sessionStorage[dimID + "Width"]) * scale + "px"
+  })

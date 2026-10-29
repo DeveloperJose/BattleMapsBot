@@ -1,0 +1,34 @@
+  return `
+<div class="player-overview-bar" style="display:flex; align-items:center;">
+  <div class="main-co-bar co-bar-container" style="width:100px;">
+    ${powerHtml}
+    <div class="power-bar" data-bar-pid="1299237" style="visibility: ${isAnyPower ? 'hidden' : 'visible'}">
+      <div class="power-percent-display hover-text">
+        <span class="cop-percent-display power-info">
+          <span class="percent-display">
+            <span>${copChargeShow}</span>
+            <br/>
+            <span>${scopChargeShow}</span>
+          </span>
+        </span>
+      </div>
+      <div class="co-power" style="width: ${100 * (copBars / (copBars + scopBars))}%">
+        ${copBarsHtml}
+      </div>
+      <div class="super-co-power" style="width: ${100 * (scopBars / (copBars + scopBars))}%">
+        ${scopBarsHtml}
+      </div>
+    </div>
+  </div>
+  <div class="power-buttons" style="flex:1; display:flex;">
+    <div class="hover-text-container" style="width:auto;">
+      <img src="terrain/aw2/redstar.gif" alt="COP Button" class="cop-button" style="display: block;">
+      <span class="player-cop-text hover-text">Toggle COP</span>
+    </div>
+    <div class="hover-text-container" style="width:auto;">
+      <img src="terrain/aw2/bluestar.gif" alt="SCOP Button" class="scop-button" style="display: block;">
+      <span class="player-scop-text hover-text">Toggle SCOP</span>
+    </div>
+  </div>
+</div>`;
+}

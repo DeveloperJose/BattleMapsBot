@@ -1,8 +1,10 @@
+import aiohttp
 import sqlite3
 import json
 import os
 import asyncio
 import logging
+import time
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from src.core.awbw import AWBWClient
@@ -91,7 +93,9 @@ class MapRepository:
                             f"Map {map_id} cache expired (older than {CACHE_TTL_SECONDS}s)"
                         )
                         return None
-                    return json.loads(json_data)
+                    data = json.loads(json_data)
+                    data.setdefault("fetched_at", datetime.fromisoformat(updated_at).timestamp())
+                    return data
         except Exception as e:
             logger.error(f"DB Error reading map {map_id}: {e}")
         return None
@@ -103,7 +107,7 @@ class MapRepository:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute(
                     "INSERT OR REPLACE INTO maps (id, json_data, updated_at) VALUES (?, ?, ?)",
-                    (map_id, json.dumps(data), datetime.now().isoformat()),
+                    (map_id, json.dumps(data), datetime.fromtimestamp(data["fetched_at"]).isoformat()),
                 )
                 conn.commit()
         except Exception as e:
@@ -151,7 +155,9 @@ class MapRepository:
             if data:
                 if "size_w" not in data and "Size X" in data:
                     logger.info(f"Migrating legacy cache for map {map_id}...")
+                    fetched_at = data["fetched_at"]
                     data = self._parse_map_data(data, map_id)
+                    data["fetched_at"] = fetched_at
                     await loop.run_in_executor(None, self._save_to_db, map_id, data)
 
                 logger.info(f"Loaded map {map_id} from DB cache.")
@@ -159,6 +165,12 @@ class MapRepository:
 
         raw_data = await self.client.get_map(map_id)
         data = self._parse_map_data(raw_data, map_id)
+        data["fetched_at"] = time.time()
+        try:
+            data["categories"] = await self.client.get_map_categories(map_id)
+        except (aiohttp.ClientError, asyncio.TimeoutError, ConnectionError, ValueError):
+            logger.warning("Could not fetch categories for map %s", map_id, exc_info=True)
+            data["categories"] = None
         await loop.run_in_executor(None, self._save_to_db, map_id, data)
 
         return data

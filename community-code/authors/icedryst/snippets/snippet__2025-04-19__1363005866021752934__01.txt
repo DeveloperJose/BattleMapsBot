@@ -1,0 +1,33 @@
+// ==UserScript==
+// @name        AWBW Map Page - View Game Moo
+// @namespace   Violentmonkey Scripts
+// @match       https://awbw.amarriner.com/prevmaps.php*
+// @grant       none
+// @version     1.0
+// @author      Ice Dryst
+// @icon         https://awbw.amarriner.com/favicon.ico
+// @description 4/19/2025, 7:31:49 AM
+// ==/UserScript==
+
+
+function main(){
+  tools.mooo_link();
+}
+
+
+const tools = {
+  /** Replace view game with view game on awbw.moo */
+  mooo_link : () => {
+    // INPUT
+    const map_nme = document.querySelector("#game-header-table > div.bold.underline.game-header-header")?.textContent?.trim()
+    const vw_gme_btn = document.querySelector("#replay-misc-controls > table > tbody > tr > td > table > tbody > tr > td:nth-child(2) > a")
+    // PROCESS
+    const query = map_nme // + " rating>1200"
+    // OUTPUT
+    if (vw_gme_btn) {vw_gme_btn.href = "http://awbw.mooo.com/searchReplays.php?q=" + query}
+  }
+}
+
+
+main()
+

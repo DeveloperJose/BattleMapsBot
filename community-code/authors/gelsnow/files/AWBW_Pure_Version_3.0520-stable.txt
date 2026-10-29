@@ -1,0 +1,328 @@
+// ==UserScript==
+// @name         AWBW 占领显示 (Pure Version) 3.0520-stable
+// @namespace    https://awbw.amarriner.com/
+// @version      3.0520
+// @description  直接读取玩家面板官方房地汇总，显示均衡房产数、通讯塔数、单位数和日期数；防自循环，节流 125ms，数据一致性检查
+// @match        https://awbw.amarriner.com/game.php?games_id*
+// @icon         https://awbw.amarriner.com/terrain/aw1/neutralcity.gif
+// @author       GelSnow
+// @license      MIT
+// @grant        none
+// @inject-into  page
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    const CITY_ICON  = 'https://awbw.amarriner.com/terrain/aw1/neutralcity.gif';
+    const TOWER_ICON = 'https://awbw.amarriner.com/terrain/aw1/neutralcomtower.gif';
+
+    /* =========================
+     * 样式注入
+     * ========================= */
+    (function injectStyle() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .ptowers-sumtowers,
+            .pproperties-capturelimit,
+            .unit-count-total { white-space: nowrap !important; }
+            .player-overview-main > .flex { white-space: nowrap; }
+            .player-overview-main img { vertical-align: middle; }
+            .balanced-limit { background: rgba(0, 0, 255, 0.50); padding: 0; border-radius: 2px; }
+            .balanced-d { background: rgba(255, 0, 0, 0.50); padding: 0; border-radius: 2px; }
+            .balanced-total { background: rgba(0, 255, 0, 0.50); padding: 0; border-radius: 2px; }
+            .player-eliminated { text-decoration: line-through; opacity: 0.7; }
+        `;
+        document.head.appendChild(style);
+    })();
+
+    /* =========================
+     * 玩家与存活数
+     * ========================= */
+    let playerOverviews = document.querySelectorAll('.player-overview-container');
+
+    const eliminatedPlayers = () =>
+        Array.from(playerOverviews).filter(p =>
+            p.querySelector('.striked.player-username')
+        );
+
+    const activePlayerCount = () =>
+        Math.max(1, playerOverviews.length - eliminatedPlayers().length);
+
+    /* =========================
+     * 规则上限
+     * ========================= */
+    function getLimit(label) {
+        const tds = document.querySelectorAll('#showinfo td');
+        for (let i = 0; i < tds.length; i++) {
+            if (tds[i].innerText.trim() === label) {
+                const v = tds[i + 1]?.innerText.trim();
+                return (!v || v === 'Off') ? Infinity : Number(v) || Infinity;
+            }
+        }
+        return Infinity;
+    }
+
+    let captureLimit = getLimit('Capture Limit:');
+    let unitLimit    = getLimit('Unit Limit:');
+    let dayLimit     = getLimit('Day Limit:');
+
+    /* =========================
+     * 官方面板解析
+     * x = 玩家拥有
+     * y = 地图总数
+     * ========================= */
+    function parseRatio(text) {
+        const m = String(text).replace(/\s+/g, '').match(/^(\d+|∞)\/(\d+|∞)$/);
+        if (!m) return null;
+        return {
+            owned: m[1] === '∞' ? Infinity : Number(m[1]),
+            total: m[2] === '∞' ? Infinity : Number(m[2]),
+        };
+    }
+
+    function readOfficialBuildingStats(playerEl) {
+        const stats = {};
+        const rows = playerEl.querySelectorAll('.player-overview-hover-buildings .hover-row');
+
+        rows.forEach(row => {
+            const span = row.querySelector('span[class^="player-"]');
+            if (!span) return;
+
+            const key = Array.from(span.classList).find(c => c.startsWith('player-'))?.slice(7);
+            if (!key) return;
+
+            const ratio = parseRatio(span.textContent);
+            if (ratio) stats[key] = ratio;
+        });
+
+        return stats;
+    }
+
+    function sumStats(stats, keys) {
+        let owned = 0;
+        let total = 0;
+        let infinite = false;
+
+        for (const k of keys) {
+            const v = stats[k];
+            if (!v) continue;
+
+            if (Number.isFinite(v.owned)) owned += v.owned;
+            if (v.total === Infinity) infinite = true;
+            else total += v.total;
+        }
+
+        return {
+            owned,
+            total: infinite ? Infinity : total
+        };
+    }
+
+    function fmt(v) {
+        return v === Infinity ? '∞' : v;
+    }
+
+    /* =========================
+     * 均衡值 D
+     * 用“地图总数 y”来算
+     * ========================= */
+    function getBalancedInfo(total) {
+        return Math.floor(total / activePlayerCount());
+    }
+
+    /* =========================
+     * 统计口径
+     * ========================= */
+    const PROPERTY_KEYS = ['city', 'hq', 'lab', 'base', 'airport', 'port'];
+    const TOWER_KEYS    = ['comtower'];
+
+    /* =========================
+     * 玩家 stat DOM 缓存
+     * ========================= */
+    const playerTables = {};
+
+    /* =========================
+     * 初始化结构（只做一次）
+     * ========================= */
+    function initPlayerStats() {
+        playerOverviews = document.querySelectorAll('.player-overview-container');
+
+        Array.from(playerOverviews).forEach(p => {
+            const pid = p.id.split('player')[1];
+            if (playerTables[pid] || p.dataset.awbwStatsInit) return;
+
+            const main = p.querySelector('.player-overview-main');
+            if (!main) return;
+
+            const stats = readOfficialBuildingStats(p);
+            const propAgg = sumStats(stats, PROPERTY_KEYS);
+            const towerAgg = sumStats(stats, TOWER_KEYS);
+
+            const box = document.createElement('div');
+            box.className = 'flex row hv-center';
+            p.dataset.awbwStatsInit = '1';
+
+            if (p.querySelector('.striked.player-username')) {
+                box.classList.add('player-eliminated');
+            }
+
+            /* --- Tower --- */
+            if (stats.comtower) {
+                const img = document.createElement('img');
+                img.src = TOWER_ICON;
+
+                const span = document.createElement('span');
+                span.className = 'ptowers-sumtowers';
+                span.appendChild(document.createTextNode(String(towerAgg.owned || 0)));
+
+                const dSpan = document.createElement('span');
+                dSpan.className = 'balanced-d';
+                dSpan.textContent = getBalancedInfo(towerAgg.total || 0);
+
+                const tSpan = document.createElement('span');
+                tSpan.className = 'balanced-total';
+                tSpan.textContent = fmt(towerAgg.total || 0);
+
+                span.appendChild(dSpan);
+                span.appendChild(tSpan);
+                box.append(img, span);
+            }
+
+            /* --- Property --- */
+            const img = document.createElement('img');
+            img.src = CITY_ICON;
+
+            const span = document.createElement('span');
+            span.className = 'pproperties-capturelimit';
+
+            const capSpan = document.createElement('span');
+            capSpan.className = 'balanced-limit';
+            capSpan.textContent = captureLimit === Infinity ? '∞' : captureLimit;
+            span.appendChild(capSpan);
+
+            // x：玩家拥有数
+            span.appendChild(document.createTextNode(String(propAgg.owned || 0)));
+
+            const dSpan = document.createElement('span');
+            dSpan.className = 'balanced-d';
+            dSpan.textContent = getBalancedInfo(propAgg.total || 0);
+            span.appendChild(dSpan);
+
+            const tSpan = document.createElement('span');
+            tSpan.className = 'balanced-total';
+            tSpan.textContent = fmt(propAgg.total || 0);
+            span.appendChild(tSpan);
+
+            box.append(img, span);
+            main.appendChild(box);
+
+            playerTables[pid] = box;
+        });
+
+        updateDayDisplay();
+    }
+
+    /* =========================
+     * 更新 Day 显示
+     * ========================= */
+    function updateDayDisplay() {
+        dayLimit = getLimit("Day Limit:");
+        const daySpan = document.querySelector('.bold.game-header-day.game-header-info');
+        if (!daySpan) return;
+
+        let raw = daySpan.textContent.trim().replace(/\/.*$/, '').trim();
+        const n = raw.match(/\d+/)?.[0] || '';
+        if (n === '') return;
+
+        const suff = dayLimit === Infinity ? '∞' : dayLimit;
+        const newText = `Day ${n}/${suff}`;
+        if (daySpan.textContent !== newText) daySpan.textContent = newText;
+    }
+
+    /* =========================
+     * 数据更新
+     * ========================= */
+    function updateData() {
+        captureLimit = getLimit('Capture Limit:');
+        unitLimit    = getLimit('Unit Limit:');
+        dayLimit     = getLimit('Day Limit:');
+
+        for (const pid in playerTables) {
+            const p = document.getElementById(`player${pid}`);
+            if (!p) continue;
+
+            const stats = readOfficialBuildingStats(p);
+            const propAgg = sumStats(stats, PROPERTY_KEYS);
+            const towerAgg = sumStats(stats, TOWER_KEYS);
+
+            const box = playerTables[pid];
+
+            const towerSpan = box.querySelector('.ptowers-sumtowers');
+            if (towerSpan) {
+                if (towerSpan.firstChild) towerSpan.firstChild.textContent = String(towerAgg.owned || 0);
+                const d = towerSpan.querySelector('.balanced-d');
+                const t = towerSpan.querySelector('.balanced-total');
+                if (d) d.textContent = getBalancedInfo(towerAgg.total || 0);
+                if (t) t.textContent = fmt(towerAgg.total || 0);
+            }
+
+            const propSpan = box.querySelector('.pproperties-capturelimit');
+            if (propSpan) {
+                if (propSpan.firstChild && propSpan.firstChild.classList?.contains('balanced-limit')) {
+                    propSpan.firstChild.textContent = captureLimit === Infinity ? '∞' : captureLimit;
+                }
+
+                // childNodes[1] 是 owned 文本节点
+                if (propSpan.childNodes[1]) propSpan.childNodes[1].textContent = String(propAgg.owned || 0);
+
+                const d = propSpan.querySelector('.balanced-d');
+                const t = propSpan.querySelector('.balanced-total');
+                if (d) d.textContent = getBalancedInfo(propAgg.total || 0);
+                if (t) t.textContent = fmt(propAgg.total || 0);
+            }
+
+            const unitNode = document.querySelector(`#player-overview-unit-count-${pid} .unit-count-total`);
+            if (unitNode) {
+                const raw = unitNode.textContent.replace(/\/.*$/, '').trim();
+                const newText = raw.includes('?')
+                    ? `?/${unitLimit === Infinity ? '∞' : unitLimit}`
+                    : `${raw.match(/\d+/)?.[0] || 0}/${unitLimit === Infinity ? '∞' : unitLimit}`;
+                if (unitNode.textContent !== newText) unitNode.textContent = newText;
+            }
+        }
+
+        updateDayDisplay();
+    }
+
+    /* =========================
+     * 节流 125ms
+     * ========================= */
+    let last = 0;
+    function throttledUpdate() {
+        const now = Date.now();
+        if (now - last < 125) return;
+        last = now;
+        try { updateData(); } catch (e) { console.error(e); }
+    }
+
+    /* =========================
+     * Observer
+     * ========================= */
+    const container = document.querySelector('#player-overview');
+    if (container) {
+        const observer = new MutationObserver(() => {
+            initPlayerStats();
+            throttledUpdate();
+        });
+        observer.observe(container, { childList: true, subtree: true });
+    }
+
+    setInterval(() => {
+        initPlayerStats();
+        throttledUpdate();
+    }, 250);
+
+    initPlayerStats();
+    updateData();
+})();

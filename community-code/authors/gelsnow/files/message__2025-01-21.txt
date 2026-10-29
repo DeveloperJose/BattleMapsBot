@@ -1,0 +1,201 @@
+// ==UserScript==
+// @name         AWBW指挥技充能显示 v1.4
+// @namespace    https://greasyfork.org/users/1062240
+// @version      1.4
+// @description  动态显示指挥技和超级指挥技条的充能剩余值，变色并添加星星效果
+// @author       Custom
+// @match        https://awbw.amarriner.com/*?games_id*
+// @match        https://awbw.amarriner.com/*?replays_id*
+// @icon         https://www.warsworldnews.com/aw/images/icons/power.png
+// @grant        none
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    const PLAYER_OVERVIEW_SELECTOR = '.player-overview-container';
+    const POWER_BAR_SELECTOR = '.power-bar';
+    const REPLAY_CONTROLS_SELECTOR = '.replay-controls';
+    let lastScopValue = null;
+
+    function init() {
+        const playerOverviews = document.querySelectorAll(PLAYER_OVERVIEW_SELECTOR);
+        playerOverviews.forEach((playerOverview) => {
+            const playerInfoList = playerOverview.querySelector('.player-overview-info ul');
+            const powerBar = playerOverview.querySelector(POWER_BAR_SELECTOR);
+
+            if (playerInfoList && powerBar) {
+                const energyDisplay = createEnergyDisplay();
+                playerInfoList.appendChild(energyDisplay.copListItem);
+                playerInfoList.appendChild(energyDisplay.scopListItem);
+                updateEnergyValues(powerBar, energyDisplay);
+
+                const observer = new MutationObserver(() => {
+                    const scopValueCurrent = parseInt(powerBar.querySelector('.scop-value')?.textContent || '0', 10);
+                    if (scopValueCurrent !== lastScopValue) {
+                        lastScopValue = scopValueCurrent;
+                        updateEnergyValues(powerBar, energyDisplay);
+                    }
+                });
+                observer.observe(powerBar, { childList: true, subtree: true });
+
+                const replayControls = document.querySelector(REPLAY_CONTROLS_SELECTOR);
+                if (replayControls) {
+                    const styleObserver = new MutationObserver(() => {
+                        const display = getComputedStyle(replayControls).display;
+                        if (display === 'none') {
+                            updateEnergyValues(powerBar, energyDisplay);
+                        }
+                    });
+                    styleObserver.observe(replayControls, { attributes: true, attributeFilter: ['style'] });
+                }
+
+                // 添加连接状态样式变化监听
+                const connectionErrorMsg = document.querySelector('.connection-error-msg.bold');
+                const connectionMsg = document.querySelector('.connection-msg');
+
+                if (connectionErrorMsg && connectionMsg) {
+                    const connectionObserver = new MutationObserver(mutations => {
+                        mutations.forEach(mutation => {
+                            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                                const errorDisplay = connectionErrorMsg.style.display;
+                                const msgDisplay = connectionMsg.style.display;
+
+                                console.log(`连接状态检测：errorDisplay=${errorDisplay}, msgDisplay=${msgDisplay}`);
+                                if (errorDisplay === 'none' || msgDisplay === 'none') {
+                                    console.log("检测到连接恢复，触发数据更新！");
+                                    updateEnergyValues(powerBar, energyDisplay);
+                                }
+                            }
+                        });
+                    });
+
+                    const observerConfig = { attributes: true, attributeFilter: ['style'] };
+                    connectionObserver.observe(connectionErrorMsg, observerConfig);
+                    connectionObserver.observe(connectionMsg, observerConfig);
+
+                    console.log("已启用连接状态监听...");
+                }
+            }
+        });
+    }
+
+    function createEnergyDisplay() {
+        const copListItem = document.createElement('li');
+        const copIcon = document.createElement('img');
+        copIcon.src = 'https://awbw.amarriner.com/terrain/aw1/redstar.gif';
+        copListItem.appendChild(copIcon);
+
+        const copValue = document.createElement('span');
+        copValue.className = 'COPRemaining';
+        copListItem.appendChild(copValue);
+
+        const scopListItem = document.createElement('li');
+        const scopIcon = document.createElement('img');
+        scopIcon.src = 'https://awbw.amarriner.com/terrain/aw1/bluestar.gif';
+        scopListItem.appendChild(scopIcon);
+
+        const scopValue = document.createElement('span');
+        scopValue.className = 'SCOPRemaining';
+        scopListItem.appendChild(scopValue);
+
+        return {
+            copListItem,
+            scopListItem,
+            copValue,
+            scopValue,
+        };
+    }
+
+    function updateEnergyValues(powerBar, energyDisplay) {
+        const copValueCurrent = parseInt(powerBar.querySelector('.cop-value')?.textContent || '0', 10);
+        const copValueMax = parseInt(powerBar.querySelector('.cop-max-value')?.textContent || '1', 10);
+        const scopValueCurrent = parseInt(powerBar.querySelector('.scop-value')?.textContent || '0', 10);
+        const scopValueMax = parseInt(powerBar.querySelector('.scop-max-value')?.textContent || '1', 10);
+
+        const copRemaining = Math.max(0, copValueMax - copValueCurrent);
+        const scopRemaining = Math.max(0, scopValueMax - scopValueCurrent);
+
+        energyDisplay.copValue.textContent = copRemaining;
+        energyDisplay.scopValue.textContent = scopRemaining;
+
+        updatePowerBarStyle(powerBar, copRemaining, scopRemaining);
+    }
+
+    function updatePowerBarStyle(powerBar, copRemaining, scopRemaining) {
+        const copStars = powerBar.querySelectorAll('.cop-star');
+        const scopStars = powerBar.querySelectorAll('.scop-star');
+
+        toggleAnimation(copStars, copRemaining);
+        toggleAnimation(scopStars, scopRemaining);
+    }
+
+    function toggleAnimation(stars, remaining) {
+        stars.forEach(star => {
+            if (remaining === 0) {
+                star.classList.add('anim-power-bar');
+            } else {
+                star.classList.remove('anim-power-bar');
+            }
+        });
+    }
+
+    // 新增：延迟1秒更新，避免重复检测卡死
+    function delayedUpdate() {
+        setTimeout(() => {
+            const powerBar = document.querySelector(POWER_BAR_SELECTOR);
+            const energyDisplay = createEnergyDisplay();
+            updateEnergyValues(powerBar, energyDisplay);
+        }, 1000); // 1秒延迟
+    }
+
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes sine-bounce {
+            0%, 100% { transform: scale(1.6); }
+            25%, 75% { transform: scale(1); }
+            50% { transform: scale(0.625); }
+        }
+
+        .cop-star.anim-power-bar .power-star-percent {
+            background: rgba(255, 0, 0, 0.6);
+            border-top: 4px solid rgba(50, 50, 50, 1);
+            border-bottom: 4px solid rgba(50, 50, 50, 1);
+            box-shadow:
+                0 0 6px rgba(80, 80, 80, 0.8),
+                0 0 12px rgba(120, 120, 120, 0.6),
+                inset 0 0 4px rgba(30, 30, 30, 0.9),
+                0 0 10px rgba(255, 255, 255, 1);
+            animation: blink 0.8s infinite, sine-bounce 0.8s infinite;
+        }
+
+        .scop-star.anim-power-bar .power-star-percent {
+            background: rgba(0, 0, 255, 0.6);
+            border-top: 4px solid rgba(50, 50, 50, 1);
+            border-bottom: 4px solid rgba(50, 50, 50, 1);
+            box-shadow:
+                0 0 6px rgba(80, 80, 80, 0.8),
+                0 0 12px rgba(120, 120, 120, 0.6),
+                inset 0 0 4px rgba(30, 30, 30, 0.9),
+                0 0 10px rgba(255, 255, 255, 1);
+            animation: blink 0.8s infinite, sine-bounce 0.8s infinite;
+        }
+    `;
+    document.head.appendChild(style);
+
+    init();
+
+    // 每次移除动画条后，调用延迟更新
+    const observer = new MutationObserver(() => {
+        const animPowerBarRemoved = !document.querySelector('.anim-power-bar');
+        if (animPowerBarRemoved) {
+            delayedUpdate(); // 延迟1秒更新
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+})();

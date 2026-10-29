@@ -1,0 +1,5 @@
+if (rbcThemesOn)
+  {
+    let newTheme = "";
+    // TODO
+    while (!newTheme.includes("lash"))

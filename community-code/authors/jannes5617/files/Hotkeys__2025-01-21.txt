@@ -1,0 +1,65 @@
+;==========================Hotkeys===========================
+Select := "f"
+
+Wait := "d"
+Fire := "a"
+Capture := "d"
+Load := "s"
+Unload := "s"
+Repair := "a"
+Hide := "s"
+Supply := "d"
+Join := "s"
+Delete := "t"
+
+DamageCalculator := "c"
+CalculateAttacker := "a"
+CalculateDefender := "d"
+NextIdleUnit := "e"
+EndTurn := "t"
+
+Infantry := "a"
+Mech := "s"
+Recon := "d"
+APC := "t"
+Artillery := "y"
+Tank := "q"
+AntiAir := "g"
+Missile := "c"
+Rocket := "x"
+MdTank := "w"
+Piperunner := "v"
+NeoTank := "e"
+MegaTank := "r"
+
+TCopter := "a"
+BCopter := "s"
+Fighter := "d"
+Bomber := "g"
+Stealth := "q"
+BlackBomb := "w"
+
+BlackBoat := "a"
+Lander := "s"
+Cruiser := "d"
+Sub := "g"
+Battleship := "y"
+Carrier := "x"
+
+CheckForUpdates := "^u"		;Ctrl + U
+PauseScript :=  "^p"		;Ctrl + P
+ExitScript := ">^e"		;Right Ctrl + E
+ToggleDebugMode := "^+d"	;Ctrl + Shift + D
+
+;=========================Settings===========================
+SkipConfirmationMessageDelete := "false"
+SkipConfirmationMessageEndTurn := "false"
+SkipDayAnnouncementOnYourTurn := "true"
+
+;=========================Features===========================
+;-All Unit commands and building menu entries can be assigned to any key or key combination. Simply change the character of any keybinding in the Hotkeys section. Changes are applied automatically when the file is saved. A complete list of possible keys can be found in the links section below. If a certain hotkey should not be assigned at all, "" can be written after the equals sign.
+;-The Hotkeys are case sensetive, meaning different actions can be bound to the same key. I.e one key could be used to buy an infantry when the building menu is open and the same key as the wait command hotkey if a unit is selected. Or capture and wait could be bounnd to the same key, as it probably never makes sense to use the wait command if capture is availbile. In that case capture would be the prefered action.
+;-The "Selector" hotkey functions similarly to a left mouse click, but is meant as a tool to select units and producing buildings exclusively. This has the advantage that units or building menus no longer have to be closed before clicking on other units or producing buildings with overlapping menus or unit movement ranges.
+;-In the settings section, various settings can be activated or deactivated, by writing "true" or "false" left to the equal sign.
+;-"SkipConfirmationMessageDelete"and "SkipConfirmationMessageEndTurn" skips their confirmation message box, otherwise the hotkey as to be pressed twice. With "SkipDayAnnouncementOnYourTurn" set to "true" the day announcement will be skiped when any Hotkey is pressed. I recommended to keep that on, as the pop up can interfere with the menu detection. "DebugMode" is meant for debugging purposes. "UsePreciseSleepMode" and "ScanDelayToWaitForMenusToOpenInMs" are probably fine as they are. If you have a slow computer and run into problems, you can try to increase the wait time and set precise sleep off, which reduces the load on the CPU. The reason why a short waiting time is required in the first place is, that menus do not open immediately when clicking on something. On the other hand, a shorter time setting improves the speed of menu recognition, so that the corresponding hotkeys are activated more quickly.
+;-The Script automatically checks for an update once a day. The update hotkey can also be used to search for updates manually. The keybinds and settings are kept when updating.

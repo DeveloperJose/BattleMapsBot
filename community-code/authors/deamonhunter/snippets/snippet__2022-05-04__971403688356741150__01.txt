@@ -1,0 +1,2 @@
+- Allow any file to be parsed, instead of ones ending in '.gz', '.zip' or ''
+- Fixed failing to parse a replay, if the turn counter was null in the replay.

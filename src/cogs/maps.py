@@ -1,13 +1,17 @@
 import discord
 from discord import app_commands, ui
-from discord.ext import commands
+from discord.ext import commands, tasks
 import re
 import traceback
 import logging
 import time
+import asyncio
+from contextlib import suppress
+from datetime import datetime, timezone
 from urllib.parse import quote
 
 from src.core.repository import MapRepository
+from src.core.league import LeagueRepository
 from src.core.aw2_renderer import AW2Renderer
 from src.core.stats import BotStats
 from src.utils.awbw_data import CTRY_NAMES
@@ -27,6 +31,8 @@ class TabbedMapView(ui.View):
         super().__init__(timeout=None)
         self.awbw_id = awbw_id
         self.embeds = embeds
+        if "tiers" not in embeds:
+            self.remove_item(self.tab_tiers)
 
     @ui.button(
         label="Preview",
@@ -36,6 +42,15 @@ class TabbedMapView(ui.View):
     )
     async def tab_preview(self, interaction: discord.Interaction, button: ui.Button):
         await self.update_tab(interaction, button, "preview")
+
+    @ui.button(
+        label="League Info",
+        emoji="🏆",
+        style=discord.ButtonStyle.secondary,
+        custom_id="map_tab_tiers",
+    )
+    async def tab_tiers(self, interaction: discord.Interaction, button: ui.Button):
+        await self.update_tab(interaction, button, "tiers")
 
     @ui.button(
         label="Properties",
@@ -62,13 +77,30 @@ class Maps(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.repo = MapRepository()
+        self.league = LeagueRepository(self.repo.client)
         self.renderer = AW2Renderer()
         self._auto_preview_last_seen: dict[tuple[int, int], float] = {}
 
+    async def cog_load(self):
+        self.refresh_league.start()
+
+    @tasks.loop(minutes=5)
+    async def refresh_league(self):
+        # Check periodically; the shared cache only fetches once every six hours.
+        await self.league.refresh()
+
     async def cog_unload(self):
+        task = self.refresh_league.get_task()
+        self.refresh_league.cancel()
+        if task is not None:
+            with suppress(asyncio.CancelledError):
+                await task
         await self.repo.close()
 
-    def build_embeds(self, awbw_id: int, map_data: dict, preview_filename: str) -> dict:
+    def build_embeds(
+        self, awbw_id: int, map_data: dict, preview_filename: str,
+        league_data: dict | None = None,
+    ) -> dict:
         author = map_data.get("author", "Unknown")
         author_url = f"https://awbw.amarriner.com/profile.php?username={quote(author)}"
         is_game = map_data.get("source") == "game"
@@ -128,18 +160,21 @@ class Maps(commands.Cog):
             header_desc = (
                 f"{map_line}\n"
                 f"**Players:** {active_players} ・ **Size:** {size_w}x{size_h} ・ {timing}\n"
-                f"{preview_links}"
             )
         else:
             header_desc = (
                 f"{author_line} ・ **Players:** {active_players} ・ **Size:** {size_w}x{size_h} ・ {timing}\n"
-                f"{preview_links}"
             )
+        categories = map_data.get("categories")
+        category_text = (
+            ", ".join(discord.utils.escape_markdown(category) for category in categories)
+            if categories
+            else "None" if categories == [] else "Unavailable"
+        )
+        header_desc += f"**Categories:** {category_text}\n{preview_links}"
         title = map_data.get("name", f"Game {game_id}" if is_game else f"Map {awbw_id}")
         if is_game:
             title = f"[Game] {title}"
-        else:
-            title = f"[Map] {title}"
 
         # Preview embed (AW2 sprites) - primary tab with embedded image
         preview_embed = discord.Embed(
@@ -225,7 +260,45 @@ class Maps(commands.Cog):
                     inline=False,
                 )
 
-        return {"preview": preview_embed, "properties": prop_embed}
+        fetched_at = map_data.get("fetched_at")
+        if fetched_at is not None:
+            for embed in (preview_embed, prop_embed):
+                embed.set_footer(text="Map data last fetched")
+                embed.timestamp = datetime.fromtimestamp(fetched_at, timezone.utc)
+
+        embeds = {"preview": preview_embed}
+        if league_data:
+            modes = {"std": "Standard", "fog": "Fog", "hf": "High Funds"}
+            sections = []
+            for setup in league_data["setups"]:
+                lines = [f"**{modes[setup['mode']]} GL**"]
+                for tier in setup["tiers"]:
+                    tier_name = discord.utils.escape_markdown(tier["name"])
+                    names = ", ".join(
+                        discord.utils.escape_markdown(name) for name in tier["cos"]
+                    ) or "None"
+                    lines.append(f"**{tier_name}:** {names}")
+                if not setup["tiers"]:
+                    lines.append("No enabled tiers.")
+                bans = ", ".join(
+                    discord.utils.escape_markdown(ban) for ban in setup["unit_bans"]
+                ) or "None"
+                lines.extend([
+                    "",
+                    f"**Unit bans:** {bans}",
+                    f"**Unit limit:** {setup['unit_limit']}",
+                    f"**Capture limit:** {setup['cap_limit']}",
+                ])
+                sections.append("\n".join(lines))
+            sections.append(
+                f"[View Global League Settings](https://awbw.amarriner.com/newleaguesetups.php)\n"
+                f"*League settings last fetched <t:{int(league_data['fetched_at'])}:R>*"
+            )
+            embeds["tiers"] = discord.Embed(
+                title=title, url=source_url, description="\n\n".join(sections),
+            )
+        embeds["properties"] = prop_embed
+        return embeds
 
     async def generate_map_response(
         self, awbw_id: int
@@ -250,7 +323,8 @@ class Maps(commands.Cog):
 
             files = [preview_file]
 
-            embeds = self.build_embeds(awbw_id, map_data, preview_filename)
+            league_data = await self.league.get_map_setups(awbw_id)
+            embeds = self.build_embeds(awbw_id, map_data, preview_filename, league_data)
             view = TabbedMapView(awbw_id, embeds)
 
             return embeds["preview"], files, view
@@ -279,7 +353,8 @@ class Maps(commands.Cog):
             preview_filename = f"awbw_game_{game_id}.webp"
             preview_file = discord.File(preview_bytes, filename=preview_filename)
 
-            embeds = self.build_embeds(game_id, map_data, preview_filename)
+            league_data = await self.league.get_map_setups(map_data["id"])
+            embeds = self.build_embeds(game_id, map_data, preview_filename, league_data)
             view = TabbedMapView(game_id, embeds)
 
             return embeds["preview"], [preview_file], view

@@ -1,0 +1,64 @@
+// ==UserScript==
+// @name         AWBW Improved Build Menu
+// @namespace    awbw
+// @match        https://awbw.amarriner.com/game.php*
+// @icon         https://awbw.amarriner.com/favicon.ico
+// @version      0.1
+// @description  Tries to keep the build menu on the screen and makes it two columns if it's too long.
+// @author       steve
+// @license      MIT
+// @grant        none
+// @inject-into  page
+// ==/UserScript==
+(function () {
+
+document.head.appendChild(document.createElement("style")).innerHTML = `
+.build-options-game > ul {
+    padding-top: 4px;
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-bottom: 0px;
+    column-gap: 4px;
+}
+.build-options-game > ul > li {
+    white-space: nowrap;
+    break-inside: avoid;
+    margin: 0 0 4px 0;
+}`;
+    //margin-top: 0;
+    //margin-bottom: 4px;
+
+let showBuildOptionsOld = showBuildOptions;
+showBuildOptions = function(x, y) {
+    showBuildOptionsOld(x, y);
+
+    const menuUl = buildOptionsMenu.querySelector('ul');
+
+    if (menuUl.childElementCount > 8) {
+        menuUl.style.columnCount = 2;
+        if (menuUl.childElementCount & 1) {
+            menuUl.style.paddingBottom = '4px';
+        }
+    } else {
+        menuUl.style.columnCount = '';
+        menuUl.style.paddingBottom = '0px';
+    }
+
+    const mapBounds = map.getBoundingClientRect();
+    const menuBounds = buildOptionsMenu.getBoundingClientRect();
+
+    if (menuBounds.bottom > mapBounds.bottom) {
+        const dt = (menuBounds.top - mapBounds.top);
+        const db = (menuBounds.bottom - mapBounds.bottom);
+        const offsetY = Math.max(0, dt - db);
+        buildOptionsMenu.style.top = `${offsetY}px`;
+    }
+    if (menuBounds.right > (mapBounds.right + 210)) {
+        const tw = 16*scale;
+        const bx = x*tw - buildOptionsMenu.clientWidth - 2;
+        if (bx >= 0) {
+            buildOptionsMenu.style.left = `${bx}px`;
+        }
+    }
+}
+})();

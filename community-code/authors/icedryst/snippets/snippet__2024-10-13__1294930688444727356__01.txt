@@ -1,0 +1,18 @@
+
+// ==UserScript==
+// @name         AWBW Delete Turn Notification
+// @namespace    http://tampermonkey.net/
+// @version      2024-09-06
+// @description  try to take over the world!
+// @author       You
+// @match        https://awbw.amarriner.com/game.php?games_id=*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=amarriner.com
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    document.querySelector(".event-screen").remove()
+    // Your code here...
+})();
+

@@ -1,0 +1,16 @@
+#outer {
+    width: 88%;
+    margin-right: 50px;
+}
+
+.player-username {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 130px;
+  text-align: left;
+}
+
+.game-player-info {
+  display: initial;
+}

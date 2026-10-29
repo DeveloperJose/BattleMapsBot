@@ -1,0 +1,3 @@
+Full graph = P1 is higher at 50% of the points and even on the other 50% of the points.
+Half Graph with no offset = P1 and P2 have the exact same graph
+Half Graph with offset = P1's graph is strictly higher than P2's graph

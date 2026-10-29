@@ -1,0 +1,10 @@
+mapRenderer.getSpriteSheet().then(() => {
+let img = new Image();
+img.onload = () => {
+    mapRenderer._spriteSheet = img;
+    mapRenderer.render();
+}
+img.src='http://url.to.my.spritesheet';
+// or base64 encoded image string and embed it in the js file like so:
+// img.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAgMAAABinRfyAAAADFBMVEUgw/8g6/+M9f/Z/P8aWcJTAAAAW0lEQVQI1wFQAK//AAAVBBAAAuuulAALqr/gAC6q6rgAK/+qrQAquv/4ACrqqvgAKurr7AAqvqupADrrr6gAP6r66AArqurpACr/vrwAC6uroAADq6/EABAUBAF9LSM9xwYxZwAAAABJRU5ErkJggg=='
+});

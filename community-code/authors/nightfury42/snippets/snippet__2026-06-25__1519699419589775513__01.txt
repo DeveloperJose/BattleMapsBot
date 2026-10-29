@@ -1,0 +1,46 @@
+// Reimplementation of the AWBW "player panel" for the move planner
+class PlayerPanel {
+  constructor(parentPanel, coSelectPanel, gameInfo, playerInfo, endTurnCallback, copUpdateCallback) {
+    this.parentPanel = parentPanel;
+    this.coSelectPanel = coSelectPanel;
+    this.gameInfo = gameInfo;
+    // note that this is only the player info on page-load,
+    // it does not update after changes to the map
+    this.playerInfo = playerInfo;
+    this.liveInfo = {
+      is_current_turn: playerInfo.is_current_turn,
+      eliminated: (playerInfo.players_eliminated === "Y"),
+      funds: (playerInfo.players_funds !== "?" ? playerInfo.players_funds : 0),
+      is_hidden: (playerInfo.players_funds === "?"),
+      income: playerInfo.players_income || 0,
+      players_co_id: playerInfo.players_co_id,
+      co_name: playerInfo.co_name,
+      co_power: playerInfo.players_co_power_on,
+      unit_count: 12,
+      unit_value: 100,
+      has_hidden_hp: false,
+      current_charge: playerInfo.players_co_power,
+    };
+    this.playerUnits = [];
+    this.playerProperties = [];
+    this.pendingBuilds = {};
+
+    this.endTurnCallback = endTurnCallback;
+    this.copUpdateCallback = copUpdateCallback;
+
+    this.panel = document.createElement("div");
+    this.panel.id = "player" + playerInfo.players_id;
+    this.panel.classList.add("player-overview-container");
+
+    this.parentPanel.appendChild(this.panel);
+
+    document.addEventListener("playerpanel:updateCharge", (event) => {
+      if (inRepairs || this.playerInfo.players_co_power_on === "Y" || this.playerInfo.players_co_power_on === "S") {
+        return;
+      }
+      this.updateCharge(event.detail?.unit, event.detail?.newHp);
+    });
+
+
+    this.updateHtml();
+  }

@@ -1,0 +1,11 @@
+// ==UserScript==
+// @name        25 Games
+// @namespace   Violentmonkey Scripts
+// @match       https://awbw.amarriner.com/yourturn.php*
+// @grant       none
+// @version     1.0
+// @icon        https://awbw.amarriner.com/favicon.ico
+// @author      IceDryst
+// @description sort games by time remaining
+// ==/UserScript==
+"use strict";var a=(t,e)=>e?t(e):null,r=(...t)=>e=>t.reduceRight((o,n)=>n(o),e);var c=t=>Array.from(t.children).slice(1),m=t=>document.evaluate("./td[1]/table/tbody/tr[2]/td/table/tbody/tr/td/table/tbody/tr/td[3]/span",t,null,XPathResult.FIRST_ORDERED_NODE_TYPE,null).singleNodeValue?.textContent;var i=t=>{let e=t.split(" ")[0],[o,n,l]=e.split(":").map(T=>parseInt(T,10));return o*1e4+n*100+l},s=r(i,m);var u=t=>c(t).sort((n,l)=>s(n)-s(l)),b=t=>e=>{t(e).map(n=>e.append(n))},y=()=>{let t=document.querySelector("#main > table > tbody > tr:nth-child(2) > td > table > tbody");a(b(u),t)};y();

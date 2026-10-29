@@ -1,0 +1,4 @@
+#outer {
+    width: 88%;
+    margin-right: 50px;
+}

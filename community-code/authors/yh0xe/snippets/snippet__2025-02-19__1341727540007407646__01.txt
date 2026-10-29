@@ -1,0 +1,14 @@
+// ==UserScript==
+// @name         LiveReload-LocalScript
+// @namespace    https://awbw.amarriner.com/
+// @version      2025-02-11
+// @description  TODO: add description, and rename
+// @author       yhaidar
+// @match        https://awbw.amarriner.com/game.php?games_id=*
+// @match        https://awbw.amarriner.com/moveplanner.php?*
+// @icon         https://awbw.amarriner.com/favicon.ico
+// @require      http://localhost:8088/live-reload.js
+// @grant        unsafeWindow
+// @run-at document-idle
+// @license MIT
+// ==/UserScript==

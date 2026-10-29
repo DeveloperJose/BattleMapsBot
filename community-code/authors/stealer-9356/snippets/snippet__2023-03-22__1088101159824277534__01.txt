@@ -1,0 +1,1 @@
+p:2110662;d:1;a:a:3:{i:0;i:2110662;i:1;i:1;i:2;a:1:{i:0;s:246:"{"action":"Resign","Resign":{"action":"Resign","playerId":2110662,"message":"Rishi is Here has resigned!"},"GameOver":{"day":1,"gameEndDate":"2023-03-21","losers":[2110662],"message":"The game is over! Badder is the winner!","winners":[2110663]}}";}}

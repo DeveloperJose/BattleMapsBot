@@ -1,0 +1,6 @@
+ let damageFormula =
+        (((damageChart[atk.id][def.id] * atk.atk) / 100) + luckATK)
+        
+        * atk.hp/100 *
+        
+        ((200 - (def.def + terrainStars[def.terrain] * def.hp)) / 100) 

@@ -1,0 +1,82 @@
+```// ==UserScript==
+// @name         AWBW AutoShareVision
+// @namespace    http://tampermonkey.net/
+// @version      2024-11-27
+// @description  Automatically grant vision to some of your friends
+// @author       You
+// @match        https://awbw.amarriner.com/game.php?games_id=*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=amarriner.com
+// @grant        none
+// ==/UserScript==
+
+// Setting:
+const friends = "Lightening strike, HJMRT07, Renz_Ai, damakuno";
+
+// Tools
+const delayV = ms => new Promise(resolve => setTimeout(resolve, ms));
+const m_none = {tag:"none"}
+const m_just = a => ({tag:"just", value:a});
+const m_isJust = ma => ma.tag == "just";
+const m_isNone = ma => ma.tag == "none";
+const m_getElse = v => ma => m_isJust(ma) ? ma.value:v;
+const m_fmap = f => ma => m_isJust(ma) ? m_just(f(ma.value)) : m_none;
+const m_ap = f => ma => m_isJust(ma) ? (v) => f(ma.value)(v) : (v) => m_none;
+
+const pipe = (...args) => x => args.reduce((ac,v)=>v(ac),x);
+const getList = s => {
+    try{
+        return m_just(document.querySelector(s).options)
+    }catch{
+        return m_none
+    }
+};
+const Tools = {
+    pipe :pipe,
+
+    selectorToList : pipe(getList, m_fmap(x=>Array.from(x).map(ar => ar.value))),
+    process : name => name.split(",").map(v=> v.trim()),
+    keepInList : la => startingList => startingList.filter(x => la.includes(x)),
+    removeInList : la => startingList => startingList.filter(x => !la.includes(x)),
+    grantVision: gameid => (v) => () =>{ console.log(v);
+                                        const userInfo = {
+                                            action: "add",
+                                            gamesId: gameid,
+                                            selectedFriend: v
+                                        };
+                                        console.log("Calling API for friend", userInfo.v);
+                                        axios.post("api/game/grant_vision.php", userInfo);
+                                       }
+};
+
+
+(async function() {
+
+    'use strict';
+    // Inputs
+    const players = Object.entries(playersInfo).map(x=>x[1].users_username);
+    const friendsRequest = Tools.process(friends);
+    const noVision = Tools.selectorToList("#grant-vision-selector");
+    const hasVision = Tools.selectorToList("#remove-vision-selector");
+
+    // Logic
+    const toGrantVision = pipe(
+        Tools.removeInList(players),
+        m_ap(Tools.keepInList)(noVision) ,
+    )(friendsRequest);
+
+
+    if (m_isNone(toGrantVision)) {
+        console.log("AWBW Auto Share Friend: Not Fog Mode");
+        return;
+    }
+    console.log(toGrantVision.lenght>0 ? `Will grant visions for: ${toGrantVision}` : "All friends have visions");
+
+    // Granting visions
+    const grantVisionIOs = toGrantVision.map(Tools.grantVision(gameId));
+    for(var i =0; i <grantVisionIOs.length;++i){
+        grantVisionIOs[i]();
+        await delayV(5000); // So that I won't get banned for spamming the API, hopefully
+    }
+    console.log("Done granting visions");
+
+})();```

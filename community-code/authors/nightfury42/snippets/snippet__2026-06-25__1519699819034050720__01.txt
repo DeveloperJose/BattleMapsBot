@@ -1,0 +1,23 @@
+function templateBars(numBars, isSuper, currCharge, maxCharge) {
+  let widthFraction = 100 / numBars;
+  let html = "";
+  let chargePerBar = maxCharge / numBars;
+
+  for (let i = 0; i < numBars; i++) {
+    let barCharge = Math.max(0, Math.min(chargePerBar, currCharge - (i * chargePerBar)));
+    let fillPercent = (barCharge / chargePerBar) * 100;
+
+    let borderRight =
+      isSuper && i === numBars - 1
+        ? "1px solid black"
+        : "none";
+
+    html += `
+      <div class="${isSuper ? 'scop-star' : 'cop-star'} power-star"
+          style="width:${widthFraction}%; border-right:${borderRight}">
+        <div class="power-star-percent" style="width:${fillPercent}%"></div>
+      </div>`;
+  }
+
+  return html;
+}

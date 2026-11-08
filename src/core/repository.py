@@ -5,16 +5,18 @@ import os
 import asyncio
 import logging
 import time
+import re
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 from src.core.awbw import AWBWClient
-from src.core.awbw_game import parse_game_page
+from src.core.awbw_game import apply_replay_turn, parse_game_page
 from src.config import config
 
 logger = logging.getLogger(__name__)
 
 CACHE_TTL_SECONDS = config.cache.get("ttl_seconds", 24 * 60 * 60)
 MAX_CACHE_SIZE_MB = config.cache.get("max_size_mb", 250)
+REPLAY_TURN_FETCH_DELAY_SECONDS = 3
 
 
 class MapRepository:
@@ -23,6 +25,7 @@ class MapRepository:
         self._ensure_dirs()
         self._init_db()
         self.client = AWBWClient()
+        self._analysis_cache: dict[int, tuple[float, dict[str, str]]] = {}
 
     def _ensure_dirs(self):
         db_dir = os.path.dirname(self.db_path)
@@ -94,7 +97,9 @@ class MapRepository:
                         )
                         return None
                     data = json.loads(json_data)
-                    data.setdefault("fetched_at", datetime.fromisoformat(updated_at).timestamp())
+                    data.setdefault(
+                        "fetched_at", datetime.fromisoformat(updated_at).timestamp()
+                    )
                     return data
         except Exception as e:
             logger.error(f"DB Error reading map {map_id}: {e}")
@@ -107,7 +112,11 @@ class MapRepository:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute(
                     "INSERT OR REPLACE INTO maps (id, json_data, updated_at) VALUES (?, ?, ?)",
-                    (map_id, json.dumps(data), datetime.fromtimestamp(data["fetched_at"]).isoformat()),
+                    (
+                        map_id,
+                        json.dumps(data),
+                        datetime.fromtimestamp(data["fetched_at"]).isoformat(),
+                    ),
                 )
                 conn.commit()
         except Exception as e:
@@ -168,18 +177,41 @@ class MapRepository:
         data["fetched_at"] = time.time()
         try:
             data["categories"] = await self.client.get_map_categories(map_id)
-        except (aiohttp.ClientError, asyncio.TimeoutError, ConnectionError, ValueError):
-            logger.warning("Could not fetch categories for map %s", map_id, exc_info=True)
+        except aiohttp.ClientError, asyncio.TimeoutError, ConnectionError, ValueError:
+            logger.warning(
+                "Could not fetch categories for map %s", map_id, exc_info=True
+            )
             data["categories"] = None
         await loop.run_in_executor(None, self._save_to_db, map_id, data)
 
         return data
 
-    async def get_game_data(self, game_id: int) -> Dict[str, Any]:
+    async def get_game_data(
+        self, game_id: int, ndx: int | None = None
+    ) -> Dict[str, Any]:
         game_html = await self.client.get_game_page(game_id)
         map_id = self._parse_game_map_id(game_html)
         base_map_data = await self.get_map_data(map_id)
-        return parse_game_page(game_html, game_id, base_map_data)
+        game_data = parse_game_page(game_html, game_id, base_map_data)
+        game_data["game_ndx"] = ndx
+        if ndx is not None:
+            await asyncio.sleep(REPLAY_TURN_FETCH_DELAY_SECONDS)
+            turn_player_id, current_day = self._parse_game_replay_context(game_html)
+            replay = await self.client.get_replay_turn(
+                game_id, ndx, turn_player_id, current_day
+            )
+            apply_replay_turn(game_data, replay)
+            game_data["current_game_day"] = current_day
+        return game_data
+
+    async def get_map_analysis(self, map_id: int) -> dict[str, str]:
+        cached = self._analysis_cache.get(map_id)
+        if cached and time.time() - cached[0] < 6 * 60 * 60:
+            return cached[1]
+        page = await self.client.get_map_analysis_page(map_id)
+        analysis = _parse_map_analysis(page)
+        self._analysis_cache[map_id] = (time.time(), analysis)
+        return analysis
 
     def _parse_game_map_id(self, game_html: str) -> int:
         import re
@@ -188,6 +220,13 @@ class MapRepository:
         if not match:
             raise ValueError("Could not find mapId in AWBW game page")
         return int(match.group(1))
+
+    def _parse_game_replay_context(self, game_html: str) -> tuple[int, int]:
+        turn_match = re.search(r"let\s+currentTurn\s*=\s*(\d+)\s*;", game_html)
+        day_match = re.search(r"let\s+gameDay\s*=\s*(\d+)\s*;", game_html)
+        if not turn_match or not day_match:
+            raise ValueError("Could not find replay context in AWBW game page")
+        return int(turn_match.group(1)), int(day_match.group(1))
 
     def clear_cache(self, map_id: Optional[int] = None):
         if map_id:
@@ -222,3 +261,92 @@ class MapRepository:
 
     async def close(self):
         await self.client.close()
+
+
+def _parse_map_analysis(page: str) -> dict[str, Any]:
+    """Extract game, country, and CO summaries from the AWBW analysis page."""
+    labels = {
+        "Games": "games",
+        "Game Days": "game_days",
+        "Avg Game Days": "avg_game_days",
+        "Real Time Days": "real_time_days",
+        "Avg RT Days": "avg_rt_days",
+        "Official Games": "official_games",
+        "Team Games": "team_games",
+        "No COP Games": "no_cop_games",
+        "First Published": "first_published",
+        "Last Published": "last_published",
+        "Rating": "rating",
+        "Comments": "comments",
+        "Favorites": "favorites",
+    }
+    analysis = {}
+    for label, key in labels.items():
+        match = re.search(
+            rf"{re.escape(label)}:(?:\s*<[^>]+>)*\s*(?P<value>[0-9][0-9,./ ]*(?:\([0-9]+%\))?)",
+            page,
+        )
+        if match:
+            analysis[key] = match.group("value").strip()
+
+    country_names = {
+        "os": "Orange Star",
+        "bm": "Blue Moon",
+        "ge": "Green Earth",
+        "yc": "Yellow Comet",
+        "bh": "Black Hole",
+        "rf": "Red Fire",
+        "gs": "Grey Sky",
+        "bd": "Brown Desert",
+        "ab": "Amber Blaze",
+        "jc": "Jade Sun",
+        "ci": "Cobalt Ice",
+        "pc": "Pink Cosmos",
+        "tg": "Teal Galaxy",
+        "pl": "Purple Lightning",
+        "ar": "Acid Rain",
+        "ww": "White Wave",
+        "aa": "Azure Asteroid",
+    }
+    country_section = re.search(
+        r"<b>Country Data</b>.*?(?=<b>CO Data</b>)", page, re.DOTALL
+    )
+    countries = []
+    if country_section:
+        for row in re.findall(r"<tr>(.*?)</tr>", country_section.group(0), re.DOTALL):
+            logo = re.search(r"terrain/aw1/([a-z]+)logo\.gif", row)
+            values = re.findall(r"<b>\s*([0-9,]+|[0-9]+%)\s*</b>", row)
+            if logo and len(values) >= 2:
+                code = logo.group(1)
+                countries.append(
+                    {
+                        "country": country_names.get(code, code.upper()),
+                        "wins": values[0],
+                        "win_pct": values[1],
+                    }
+                )
+    if countries:
+        analysis["countries"] = countries
+
+    co_section = re.search(r"<b>CO Data</b>(.*)", page, re.DOTALL)
+    cos = []
+    if co_section:
+        for row in re.findall(r"<tr>(.*?)</tr>", co_section.group(1), re.DOTALL):
+            name = re.search(r'<td title="([^"]+)"', row)
+            cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.DOTALL)
+            values = [re.sub(r"<[^>]+>", "", cell).strip() for cell in cells[1:]]
+            if name and len(values) >= 4:
+                cos.append(
+                    {
+                        "name": name.group(1),
+                        "chosen": values[0],
+                        "chosen_pct": values[1],
+                        "record": values[2],
+                        "win_pct": values[3],
+                    }
+                )
+    if cos:
+        analysis["cos"] = sorted(
+            cos, key=lambda row: int(row["chosen"].replace(",", "")), reverse=True
+        )
+    return analysis

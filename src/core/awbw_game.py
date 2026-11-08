@@ -22,6 +22,7 @@ def parse_game_page(
     units_info = _extract_json_assignment(page_html, "unitsInfo")
     generic_units = _extract_json_assignment(page_html, "genericUnits")
     viewer_colors = _extract_json_assignment(page_html, "viewerColors")
+    players = _extract_json_assignment_optional(page_html, "playersInfo")
     map_data = dict(base_map_data)
     map_data["source"] = "game"
     map_data["id"] = map_id
@@ -29,6 +30,15 @@ def parse_game_page(
     map_data["game_day"] = game_day
     map_data["current_turn"] = current_turn
     map_data["current_turn_country"] = viewer_colors.get(str(current_turn), "")
+    map_data["game_players"] = (
+        [
+            str(player["users_username"])
+            for player in players.values()
+            if isinstance(player, dict) and player.get("users_username")
+        ]
+        if isinstance(players, dict)
+        else []
+    )
     map_data["size_w"] = width
     map_data["size_h"] = height
     map_data["name"] = _extract_game_title(page_html) or map_data.get(
@@ -42,6 +52,30 @@ def parse_game_page(
     map_data["unit"] = _parse_units(units_info, buildings_info, generic_units)
 
     return map_data
+
+
+def apply_replay_turn(map_data: dict[str, Any], replay: dict[str, Any]) -> None:
+    """Replace the live board with AWBW's replay state for one turn."""
+    state = replay.get("gameState")
+    if not isinstance(state, dict):
+        raise AWBWGameParseError("Replay response does not contain a game state")
+
+    buildings = state.get("buildings")
+    units = state.get("units")
+    if not isinstance(buildings, dict) or not isinstance(units, dict):
+        raise AWBWGameParseError("Replay response is missing buildings or units")
+
+    terrain = _copy_terrain(map_data.get("terr", []))
+    _overlay_buildings(terrain, map_data["size_w"], map_data["size_h"], buildings)
+    map_data["terr"] = terrain
+    map_data["unit"] = _parse_units(units, buildings, state.get("generic_units", {}))
+    map_data["game_day"] = int(replay.get("day", map_data["game_day"]))
+    current_turn = state.get("currentTurnPId")
+    players = state.get("players", {})
+    if isinstance(players, dict) and current_turn is not None:
+        current_player = players.get(str(current_turn), players.get(current_turn, {}))
+        if isinstance(current_player, dict):
+            map_data["current_turn_country"] = current_player.get("countries_code", "")
 
 
 def _extract_int(text: str, pattern: str) -> int:
@@ -66,6 +100,13 @@ def _extract_json_assignment(text: str, name: str) -> Any:
         raise AWBWGameParseError(f"Could not decode {name}: {exc}") from exc
 
     return value
+
+
+def _extract_json_assignment_optional(text: str, name: str) -> Any:
+    try:
+        return _extract_json_assignment(text, name)
+    except AWBWGameParseError:
+        return None
 
 
 def _extract_game_title(text: str) -> str | None:
@@ -154,6 +195,13 @@ def _is_capturing(
 ) -> bool:
     if unit_name.lower() not in {"infantry", "mech"}:
         return False
+    buildings_info = {
+        str(x): {
+            str(b["buildings_y"]): b
+            for b in (col.values() if isinstance(col, dict) else col)
+        }
+        for x, col in buildings_info.items()
+    }
     building = buildings_info.get(str(x), {}).get(str(y))
     if not isinstance(building, dict):
         return False

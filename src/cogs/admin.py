@@ -20,7 +20,7 @@ class Admin(commands.Cog):
         self.repo = MapRepository()
         self.start_time = datetime.now()
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+    async def cog_app_command_check(self, interaction: discord.Interaction) -> bool:
         is_owner = await self.bot.is_owner(interaction.user)
         if not is_owner:
             await interaction.response.send_message(
@@ -32,12 +32,14 @@ class Admin(commands.Cog):
         await self.repo.close()
 
     @app_commands.command(name="sync", description="Sync slash commands")
+    @app_commands.default_permissions(administrator=True)
     async def sync_tree(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         await self.bot.tree.sync()
         await interaction.followup.send("Slash commands synced.")
 
     @app_commands.command(name="reload", description="Reload all cogs")
+    @app_commands.default_permissions(administrator=True)
     async def reload_all(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
@@ -75,6 +77,7 @@ class Admin(commands.Cog):
         name="map_refresh", description="Refresh a map's data and cache"
     )
     @app_commands.describe(awbw_id="The ID of the map to refresh")
+    @app_commands.default_permissions(administrator=True)
     async def map_refresh(self, interaction: discord.Interaction, awbw_id: int):
         await interaction.response.defer(ephemeral=True)
 
@@ -90,6 +93,7 @@ class Admin(commands.Cog):
     @app_commands.command(
         name="map_purge_cache", description="Purge ALL map caches (DB only)"
     )
+    @app_commands.default_permissions(administrator=True)
     async def map_purge_cache(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
@@ -100,6 +104,7 @@ class Admin(commands.Cog):
             await interaction.followup.send(f"Failed to purge cache: {e}")
 
     @app_commands.command(name="rebuild_atlas", description="Rebuild the sprite atlas")
+    @app_commands.default_permissions(administrator=True)
     async def rebuild_atlas(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
@@ -115,6 +120,7 @@ class Admin(commands.Cog):
             traceback.print_exc()
 
     @app_commands.command(name="stats", description="Show bot statistics")
+    @app_commands.default_permissions(administrator=True)
     async def stats(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 

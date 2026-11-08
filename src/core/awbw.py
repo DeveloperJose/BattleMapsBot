@@ -73,17 +73,20 @@ class AWBWClient:
             finally:
                 BotStats().record_api_request(time.time() - start_time)
 
-    async def get_game_page(self, game_id: int) -> str:
+    async def get_game_page(self, game_id: int, ndx: int | None = None) -> str:
         """Fetches the public AWBW game page HTML with rate limiting."""
         session = await self.get_session()
 
         async with self._limiter:
             start_time = time.time()
             try:
-                logger.info(f"Fetching game {game_id} page from AWBW...")
+                params = {"games_id": game_id}
+                if ndx is not None:
+                    params["ndx"] = ndx
+                logger.info("Fetching game %s page from AWBW...", game_id)
                 async with session.get(
                     "https://awbw.amarriner.com/game.php",
-                    params={"games_id": game_id},
+                    params=params,
                     headers={"User-Agent": "BattleMapsBot/1.0"},
                 ) as response:
                     if response.status != 200:
@@ -96,6 +99,55 @@ class AWBWClient:
                 raise
             finally:
                 BotStats().record_api_request(time.time() - start_time)
+
+    async def get_replay_turn(
+        self, game_id: int, turn: int, turn_player_id: int, current_day: int
+    ) -> dict[str, Any]:
+        """Fetch the board state for an AWBW replay turn."""
+        session = await self.get_session()
+        async with self._limiter:
+            started = time.time()
+            try:
+                async with session.post(
+                    "https://awbw.amarriner.com/api/game/load_replay.php",
+                    json={
+                        "gameId": game_id,
+                        "turn": turn,
+                        "turnPId": turn_player_id,
+                        "turnDay": current_day,
+                        "initial": True,
+                    },
+                    headers={
+                        "Referer": f"https://awbw.amarriner.com/game.php?games_id={game_id}&ndx={turn}",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                ) as response:
+                    if response.status != 200:
+                        raise ConnectionError(
+                            f"AWBW replay returned status {response.status}"
+                        )
+                    return await response.json(content_type=None)
+            finally:
+                BotStats().record_api_request(time.time() - started)
+
+    async def get_map_analysis_page(self, map_id: int) -> str:
+        """Fetch the public map-analysis page from AWBW."""
+        session = await self.get_session()
+        async with self._limiter:
+            started = time.time()
+            try:
+                async with session.get(
+                    "https://awbw.amarriner.com/analysis.php",
+                    params={"maps_id": map_id},
+                    headers={"User-Agent": "BattleMapsBot/1.0"},
+                ) as response:
+                    if response.status != 200:
+                        raise ConnectionError(
+                            f"AWBW map analysis returned status {response.status}"
+                        )
+                    return await response.text()
+            finally:
+                BotStats().record_api_request(time.time() - started)
 
     async def get_map_categories(self, map_id: int) -> list[str]:
         session = await self.get_session()

@@ -9,11 +9,12 @@ import time
 import asyncio
 from contextlib import suppress
 from datetime import datetime, timezone
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlparse
 
 from src.core.repository import MapRepository
 from src.core.league import LeagueRepository
 from src.core.aw2_renderer import AW2Renderer
+from src.core.sprite_renderer import DotSpriteRenderer
 from src.core.stats import BotStats
 from src.utils.awbw_data import CTRY_NAMES
 from src.utils.map_helpers import format_k, count_properties, count_units
@@ -28,7 +29,27 @@ RE_AWL = re.compile(
 RE_GAME = re.compile(
     r"(?i)https?://(?:www\.)?awbw\.amarriner\.com/game\.php\?games_id=(?P<id>[0-9]+)(?:&ndx=(?P<ndx>[0-9]+))?"
 )
-RE_GAME_REQUEST = re.compile(r"(?i)(?:^|\s)!game\s+(?:<)?" + RE_GAME.pattern[4:])
+
+
+def _format_date(value: object) -> str:
+    """Format AWBW's date-only values without inventing a timezone."""
+    text = str(value).strip()
+    for date_format in ("%m/%d/%Y", "%Y-%m-%d"):
+        try:
+            parsed = datetime.strptime(text, date_format)
+            return f"{parsed.day} {parsed:%b %Y}"
+        except ValueError:
+            continue
+    return text
+
+
+def _format_rating(value: object) -> str:
+    """Use readable, consistent thousands separators for ratings."""
+    try:
+        rating = float(str(value).replace(",", ""))
+    except TypeError, ValueError:
+        return str(value)
+    return f"{int(rating):,}" if rating.is_integer() else f"{rating:,.2f}"
 
 
 class TabbedMapView(ui.View):
@@ -123,22 +144,33 @@ class Maps(commands.Cog):
         self.repo = MapRepository()
         self.league = LeagueRepository(self.repo.client)
         self.renderer = AW2Renderer()
+        self.sprite_renderer = DotSpriteRenderer()
         self._auto_preview_last_seen: dict[tuple[int, int], float] = {}
         self._persistent_view = PersistentMapView(self)
 
     async def cog_load(self):
         self.bot.add_view(self._persistent_view)
         self.refresh_league.start()
+        self.refresh_standings.start()
 
     @tasks.loop(minutes=5)
     async def refresh_league(self):
         # Check periodically; the shared cache only fetches once every six hours.
         await self.league.refresh()
 
+    @tasks.loop(hours=1)
+    async def refresh_standings(self):
+        """Refresh public ladder snapshots at most once per 24 hours."""
+        try:
+            await self.repo.get_league_rankings()
+        except Exception:
+            logger.exception("Could not refresh daily AWBW ladder snapshots")
+
     async def cog_unload(self):
         self.bot.remove_view(self._persistent_view)
         task = self.refresh_league.get_task()
         self.refresh_league.cancel()
+        self.refresh_standings.cancel()
         if task is not None:
             with suppress(asyncio.CancelledError):
                 await task
@@ -168,9 +200,9 @@ class Maps(commands.Cog):
             map_line = f"**Map:** [{map_data.get('map_name', 'Unknown')}](https://awbw.amarriner.com/prevmaps.php?maps_id={map_id})"
         else:
             if author == "[Unknown]":
-                author_line = "**Map Author:** [Unknown]"
+                author_line = "**Author:** [Unknown]"
             else:
-                author_line = f"**Map Author:** [{author}]({author_url})"
+                author_line = f"**Author:** [{author}]({author_url})"
 
         if is_game:
             preview_links = f"[Game]({source_url}) ・ [Move Planner](https://awbw.amarriner.com/moveplanner.php?games_id={game_id})"
@@ -197,6 +229,9 @@ class Maps(commands.Cog):
         last_modified = analysis.get(
             "last_published", map_data.get("published", "Unknown")[:10]
         )
+        if first_published:
+            first_published = _format_date(first_published)
+        last_modified = _format_date(last_modified)
         active_players = len([i for i in active_ctries if i != 0])
         if is_game:
             game_lines = [map_line]
@@ -229,16 +264,17 @@ class Maps(commands.Cog):
             header_desc += preview_links
         else:
             categories = map_data.get("categories")
-            category_text = (
-                ", ".join(
-                    discord.utils.escape_markdown(category) for category in categories
+            if categories is not None:
+                category_text = (
+                    ", ".join(
+                        discord.utils.escape_markdown(category)
+                        for category in categories
+                    )
+                    if categories
+                    else "None"
                 )
-                if categories
-                else "None"
-                if categories == []
-                else "Unavailable"
-            )
-            header_desc += f"**Categories:** {category_text}\n{preview_links}"
+                header_desc += f"**Categories:** {category_text}\n"
+            header_desc += preview_links
         title = map_data.get("name", f"Game {game_id}" if is_game else f"Map {awbw_id}")
 
         # Preview embed (AW2 sprites) - primary tab with embedded image
@@ -367,7 +403,8 @@ class Maps(commands.Cog):
                 sections.append("\n".join(lines))
             sections.append(
                 f"[View Global League Settings](https://awbw.amarriner.com/newleaguesetups.php)\n"
-                f"*League settings last fetched <t:{int(league_data['fetched_at'])}:R>*"
+                f"*League settings last fetched <t:{int(league_data['fetched_at'])}:f> "
+                f"(<t:{int(league_data['fetched_at'])}:R>)*"
             )
             embeds["tiers"] = discord.Embed(
                 title=title,
@@ -544,6 +581,153 @@ class Maps(commands.Cog):
         finally:
             BotStats().record_game_generation(time.time() - start_time, game_id)
 
+    @staticmethod
+    def parse_map_id(value: str) -> int | None:
+        """Accept a map ID or an AWBW map-preview URL."""
+        match = RE_AWL.search(value.strip("<>"))
+        if match:
+            return int(match.group("id"))
+        value = value.strip()
+        return int(value) if value.isdigit() else None
+
+    async def generate_sprite_response(
+        self, value: str
+    ) -> tuple[discord.Embed, discord.File] | None:
+        map_id = self.parse_map_id(value)
+        if map_id is None:
+            return None
+        started = time.time()
+        try:
+            map_data = await self.repo.get_map_data(map_id, include_categories=False)
+            width = int(map_data.get("size_w", 0))
+            height = int(map_data.get("size_h", 0))
+            if width <= 0 or height <= 0 or width * height > MAX_MAP_TILES:
+                raise ValueError(f"Invalid map size {width}x{height}")
+            animated, preview_bytes = self.sprite_renderer.render_map(map_data)
+            preview_filename = f"awbw_sprite_{map_id}.{'gif' if animated else 'png'}"
+            preview_file = discord.File(preview_bytes, filename=preview_filename)
+            embed = self.build_embeds(map_id, map_data, preview_filename)["preview"]
+            return embed, preview_file
+        except Exception:
+            logger.exception("Error generating dot-sprite preview for map %s", map_id)
+            return None
+        finally:
+            BotStats().record_sprite_generation(time.time() - started, map_id)
+
+    def parse_profile_username(self, value: str) -> str | None:
+        value = value.strip("<>")
+        if "profile.php" in value:
+            username = parse_qs(urlparse(value).query).get("username", [""])[0]
+        else:
+            username = value
+        username = username.strip()
+        if not username or len(username) > 64 or "\n" in username or "\r" in username:
+            return None
+        return username
+
+    async def generate_profile_response(self, value: str) -> discord.Embed | None:
+        username = self.parse_profile_username(value)
+        if username is None:
+            return None
+        started = time.time()
+        try:
+            profile = await self.repo.get_profile_data(username)
+            ranks = await self.repo.get_profile_league_ranks(profile["username"])
+            display_name = profile["username"]
+            profile_url = (
+                f"https://awbw.amarriner.com/profile.php?username={quote(display_name)}"
+            )
+            description_lines = []
+            if profile.get("role"):
+                description_lines.append(f"**Role:** {profile['role'].title()}")
+            if profile.get("status"):
+                description_lines.append(f"**Status:** {profile['status'].title()}")
+            if profile.get("last_activity"):
+                last_activity = profile.get("last_activity_timestamp")
+                description_lines.append(
+                    f"**Last Activity:** <t:{last_activity}:f> (<t:{last_activity}:R>)"
+                    if last_activity
+                    else f"**Last Activity:** {profile['last_activity']}"
+                )
+            embed = discord.Embed(
+                title=display_name,
+                url=profile_url,
+                description="\n".join(description_lines) or None,
+            )
+            global_league = []
+            if ranks.get("global_current"):
+                global_league.append(
+                    f"**Current Ladder Rank:** #{ranks['global_current']}"
+                )
+            if ranks.get("global_all_time"):
+                global_league.append(
+                    f"**All-Time Ladder Rank:** #{ranks['global_all_time']}"
+                )
+            if profile.get("official_rating"):
+                global_league.append(
+                    f"**Rating:** {_format_rating(profile['official_rating'])}"
+                )
+            mode_prefix = "" if ranks.get("global_std") is not None else "All-Time "
+            mode_keys = (
+                ("global_std", "Standard"),
+                ("global_fog", "Fog"),
+                ("global_hf", "High Funds"),
+            )
+            if mode_prefix:
+                mode_keys = tuple(
+                    (f"global_all_time_{key.removeprefix('global_')}", label)
+                    for key, label in mode_keys
+                )
+            for key, label in mode_keys:
+                if ranks.get(key) is not None:
+                    global_league.append(
+                        f"**{mode_prefix}{label}:** {_format_rating(ranks[key])}"
+                    )
+            if profile.get("global_record"):
+                global_league.append(f"**W-L-D:** {profile['global_record']}")
+            if global_league:
+                embed.add_field(
+                    name="Global League", value="\n".join(global_league), inline=True
+                )
+            live_league = profile.get("live_league")
+            if live_league:
+                live_lines = []
+                if ranks.get("live"):
+                    live_lines.append(f"**Unofficial Ladder Rank:** #{ranks['live']}")
+                if ranks.get("live_elo"):
+                    live_lines.append(
+                        f"**Unofficial Overall Elo:** {_format_rating(ranks['live_elo'])}"
+                    )
+                for key, label in (
+                    ("std_rating", "Standard"),
+                    ("fog_rating", "Fog"),
+                    ("hf_rating", "High Funds"),
+                ):
+                    if live_league.get(key):
+                        live_lines.append(
+                            f"**{label}:** {_format_rating(live_league[key])}"
+                        )
+                if live_league.get("record"):
+                    live_lines.append(f"**W-L-D:** {live_league['record']}")
+                if live_lines:
+                    embed.add_field(
+                        name="Live League", value="\n".join(live_lines), inline=True
+                    )
+            embed.add_field(
+                name="Games",
+                value=(
+                    f"**Active:** {profile.get('current_games', 0)}\n"
+                    f"**Their Turn:** {profile.get('games_to_move', 0)}"
+                ),
+                inline=True,
+            )
+            return embed
+        except Exception:
+            logger.exception("Error generating profile for %s", username)
+            return None
+        finally:
+            BotStats().record_profile_generation(time.time() - started)
+
     @app_commands.command(name="map", description="Preview an AWBW map")
     @app_commands.describe(awbw_id="The ID of the AWBW map")
     async def map_preview(self, interaction: discord.Interaction, awbw_id: int):
@@ -580,31 +764,36 @@ class Maps(commands.Cog):
                 f"Error loading game ID {game_id}. Please check the ID and replay index."
             )
 
+    @app_commands.command(name="profile", description="Preview an AWBW player profile")
+    @app_commands.describe(player="An AWBW username or profile URL")
+    async def profile_preview(self, interaction: discord.Interaction, player: str):
+        await interaction.response.defer()
+        embed = await self.generate_profile_response(player)
+        if embed:
+            await interaction.followup.send(embed=embed)
+        else:
+            await interaction.followup.send(
+                "Error loading that profile. Please provide a valid AWBW username or profile URL."
+            )
+
+    @app_commands.command(
+        name="sprite", description="Create a dot-sprite AWBW map preview"
+    )
+    @app_commands.describe(map="The AWBW map URL or ID")
+    async def sprite_preview(self, interaction: discord.Interaction, map: str):
+        await interaction.response.defer()
+        result = await self.generate_sprite_response(map)
+        if result:
+            embed, preview_file = result
+            await interaction.followup.send(embed=embed, file=preview_file)
+        else:
+            await interaction.followup.send(
+                "Error loading that map. Please provide an AWBW map URL or ID."
+            )
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot:
-            return
-        game_match = RE_GAME_REQUEST.search(message.content)
-        if game_match:
-            now = time.monotonic()
-            channel_id = getattr(message.channel, "id", 0)
-            key = (channel_id, message.author.id)
-            if (
-                now - self._auto_preview_last_seen.get(key, 0)
-                < AUTO_PREVIEW_COOLDOWN_SECONDS
-            ):
-                return
-            self._auto_preview_last_seen[key] = now
-            async with message.channel.typing():
-                ndx_text = game_match.group("ndx")
-                result = await self.generate_game_response(
-                    int(game_match.group("id")), int(ndx_text) if ndx_text else None
-                )
-                if result:
-                    embed, files, view = result
-                    await message.reply(
-                        embed=embed, files=files, view=view, mention_author=False
-                    )
             return
         match = RE_AWL.search(message.content)
         if match:

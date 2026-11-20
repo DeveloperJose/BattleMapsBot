@@ -162,6 +162,8 @@ class Admin(commands.Cog):
             render_stats = bot_stats.get_render_stats()
             game_render_stats = bot_stats.get_game_render_stats()
             game_generation_stats = bot_stats.get_game_generation_stats()
+            profile_generation_stats = bot_stats.get_profile_generation_stats()
+            sprite_generation_stats = bot_stats.get_sprite_generation_stats()
 
             # System info
             python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
@@ -199,6 +201,17 @@ class Admin(commands.Cog):
                     f"{game_generation_stats['longest'] * 1000:.1f} ms"
                 )
 
+            longest_sprite_map_id = sprite_generation_stats.get("longest_map_id", 0)
+            if longest_sprite_map_id:
+                longest_sprite_generation_str = (
+                    f"{sprite_generation_stats['longest'] * 1000:.1f} ms "
+                    f"(Map ID: {longest_sprite_map_id})"
+                )
+            else:
+                longest_sprite_generation_str = (
+                    f"{sprite_generation_stats['longest'] * 1000:.1f} ms"
+                )
+
             msg = (
                 f"**🤖 Bot Statistics**\n"
                 f"```\n"
@@ -218,6 +231,7 @@ class Admin(commands.Cog):
                 f"```\n"
                 f"DB Cache Size:    {cache_stats['db_size_mb']:.2f} MB / {cache_stats['size_limit_mb']} MB\n"
                 f"Cached Maps:      {cache_stats['entry_count']}\n"
+                f"Cached Profiles:  {cache_stats['profile_entry_count']}\n"
                 f"Cache TTL:        {cache_stats['ttl_seconds']} seconds\n"
                 f"Atlas Size:       {atlas_size_mb:.2f} MB\n"
                 f"Atlas Sprites:    {atlas_count}\n"
@@ -251,6 +265,19 @@ class Admin(commands.Cog):
                 f"Total Time:       {game_generation_stats['total_time']:.2f} s\n"
                 f"Avg Generation:   {game_generation_stats['average'] * 1000:.1f} ms\n"
                 f"Longest Gen:      {longest_game_generation_str}\n"
+                f"```\n"
+                f"**👤 Profile Generation Statistics (All time)**\n"
+                f"```\n"
+                f"Total Generated:  {profile_generation_stats['count']}\n"
+                f"Total Time:       {profile_generation_stats['total_time']:.2f} s\n"
+                f"Avg Generation:   {profile_generation_stats['average'] * 1000:.1f} ms\n"
+                f"```"
+                f"**🟩 Sprite Preview Statistics (All time)**\n"
+                f"```\n"
+                f"Total Generated:  {sprite_generation_stats['count']}\n"
+                f"Total Time:       {sprite_generation_stats['total_time']:.2f} s\n"
+                f"Avg Generation:   {sprite_generation_stats['average'] * 1000:.1f} ms\n"
+                f"Longest Gen:      {longest_sprite_generation_str}\n"
                 f"```"
             )
 

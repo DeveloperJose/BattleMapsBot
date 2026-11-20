@@ -149,6 +149,65 @@ class AWBWClient:
             finally:
                 BotStats().record_api_request(time.time() - started)
 
+    async def get_profile_page(self, username: str) -> str:
+        """Fetch a public AWBW profile page through the shared rate limiter."""
+        session = await self.get_session()
+        async with self._limiter:
+            started = time.time()
+            try:
+                async with session.get(
+                    "https://awbw.amarriner.com/profile.php",
+                    params={"username": username},
+                    headers={"User-Agent": "BattleMapsBot/1.0"},
+                ) as response:
+                    if response.status != 200:
+                        raise ConnectionError(
+                            f"AWBW profile returned status {response.status}"
+                        )
+                    return await response.text()
+            finally:
+                BotStats().record_api_request(time.time() - started)
+
+    async def get_global_league_standings_page(self, time_period: str) -> str:
+        """Fetch the public Global League table through the shared limiter."""
+        session = await self.get_session()
+        async with self._limiter:
+            started = time.time()
+            try:
+                async with session.get(
+                    "https://awbw.amarriner.com/newleague_standings.php",
+                    params={"type": "tot", "time": time_period},
+                    headers={"User-Agent": "BattleMapsBot/1.0"},
+                ) as response:
+                    if response.status != 200:
+                        raise ConnectionError(
+                            f"AWBW Global League standings returned status {response.status}"
+                        )
+                    # The all-time table occasionally includes legacy bytes that
+                    # are invalid UTF-8 despite the page's declared charset.
+                    return await response.text(encoding="latin-1")
+            finally:
+                BotStats().record_api_request(time.time() - started)
+
+    async def get_live_league_standings(self) -> dict[str, Any]:
+        """Fetch the public Live League leaderboard through the shared limiter."""
+        session = await self.get_session()
+        async with self._limiter:
+            started = time.time()
+            try:
+                async with session.post(
+                    "https://awbw.amarriner.com/api/live/standings.php?method=leaderboard",
+                    json={"method": "leaderboard", "filter": "all"},
+                    headers={"User-Agent": "BattleMapsBot/1.0"},
+                ) as response:
+                    if response.status != 200:
+                        raise ConnectionError(
+                            f"AWBW Live League standings returned status {response.status}"
+                        )
+                    return await response.json(content_type=None)
+            finally:
+                BotStats().record_api_request(time.time() - started)
+
     async def get_map_categories(self, map_id: int) -> list[str]:
         session = await self.get_session()
         async with self._limiter:

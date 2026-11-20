@@ -79,6 +79,12 @@ class BotStats:
     def record_game_generation(self, duration: float, game_id: int) -> None:
         self._record("game_generation", duration, game_id)
 
+    def record_profile_generation(self, duration: float) -> None:
+        self._record("profile_generation", duration)
+
+    def record_sprite_generation(self, duration: float, map_id: int) -> None:
+        self._record("sprite_generation", duration, map_id)
+
     def _get_stats(self, kind: str) -> Dict[str, Any]:
         with closing(self._connect()) as conn:
             row = conn.execute(
@@ -130,4 +136,12 @@ class BotStats:
     def get_game_generation_stats(self) -> Dict[str, Any]:
         stats = self._get_stats("game_generation")
         stats["longest_game_id"] = stats.pop("longest_id")
+        return stats
+
+    def get_profile_generation_stats(self) -> Dict[str, Any]:
+        return self._get_stats("profile_generation")
+
+    def get_sprite_generation_stats(self) -> Dict[str, Any]:
+        stats = self._get_stats("sprite_generation")
+        stats["longest_map_id"] = stats.pop("longest_id")
         return stats

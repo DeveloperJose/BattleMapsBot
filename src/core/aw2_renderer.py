@@ -35,6 +35,16 @@ TILE_SIZE = config.renderer["tile_size"]
 MAX_PROP_EXTENSION = config.renderer["max_prop_extension"]
 
 
+def _is_building_terrain_id(terrain_id: int) -> bool:
+    """Match AWBW's MapRenderer.isBuilding terrain classification."""
+    return (
+        34 <= terrain_id <= 100
+        or 111 <= terrain_id <= 114
+        or 117 <= terrain_id <= 194
+        or terrain_id >= 196
+    )
+
+
 class AW2Renderer:
     """Renderer using actual AW2 game sprites."""
 
@@ -278,6 +288,12 @@ class AW2Renderer:
         for i, tid in enumerate(unique_ids):
             sprite_arr, sprite_name = self._get_sprite_for_terrain(tid)
 
+            # Mountains are context-sensitive and must be drawn after water.
+            # Their upper pixels overlap the tile immediately above them.
+            if tid == 2:
+                lut[i] = plain_arr
+                continue
+
             if tid in PROPERTY_IDS:
                 lut[i] = plain_arr
                 sprite_img = self._get_sprite_image(sprite_name)
@@ -377,6 +393,25 @@ class AW2Renderer:
                 if self._plain_image:
                     output.paste(self._plain_image, (px, py))
                 paste(sprite_img, (px, py), mask=sprite_img)
+
+        # Draw mountains after sea and shoals.  AWBW draws rows top-to-bottom,
+        # so a mountain's peak overlays water immediately above it.  A building
+        # directly above instead uses minimountain to avoid that overlap.
+        mountain_ys, mountain_xs = np.where(terrain_ids == 2)
+        mountain_sprite = self._get_sprite_image("mountain")
+        mini_mountain_sprite = self._get_sprite_image("minimountain")
+        for y, x in zip(mountain_ys, mountain_xs):
+            above_id = int(terrain_ids[y - 1, x]) if y > 0 else 0
+            sprite = (
+                mini_mountain_sprite
+                if _is_building_terrain_id(above_id)
+                else mountain_sprite
+            )
+            if sprite:
+                px = x * TILE_SIZE
+                py = y * TILE_SIZE + MAX_PROP_EXTENSION
+                paste_y = py - (sprite.height - TILE_SIZE)
+                paste(sprite, (px, paste_y), mask=sprite)
 
         # Draw properties on top of terrain and shoals
         if property_sprite_cache:

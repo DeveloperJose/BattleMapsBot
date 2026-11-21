@@ -729,16 +729,20 @@ class Maps(commands.Cog):
             BotStats().record_profile_generation(time.time() - started)
 
     @app_commands.command(name="map", description="Preview an AWBW map")
-    @app_commands.describe(awbw_id="The ID of the AWBW map")
-    async def map_preview(self, interaction: discord.Interaction, awbw_id: int):
+    @app_commands.describe(map="The AWBW map URL or ID")
+    async def map_preview(self, interaction: discord.Interaction, map: str):
         await interaction.response.defer()
-        result = await self.generate_map_response(awbw_id)
+        map_id = self.parse_map_id(map)
+        if map_id is None:
+            await interaction.followup.send("Please provide an AWBW map URL or ID.")
+            return
+        result = await self.generate_map_response(map_id)
         if result:
             embed, files, view = result
             await interaction.followup.send(embed=embed, files=files, view=view)
         else:
             await interaction.followup.send(
-                f"Error loading map ID {awbw_id}. Please check if the ID is valid."
+                f"Error loading map ID {map_id}. Please check if the ID is valid."
             )
 
     @app_commands.command(name="game", description="Preview an AWBW game")

@@ -14,6 +14,10 @@ Use `/game` with a game ID or URL for a public game preview. Add `ndx` to the UR
 
 Map previews include a private **Map Info** button with property counts and AWBW map-history statistics such as rating, favorites, game count, and average game length. Game previews include player names and only the Preview tab.
 
+## Community code archive
+
+This is a snapshot of scripts, snippets, and project links shared in the AWBW community's "Community Development" thread. Browse the [community-code archive](community-code/README.md).
+
 ## Setup
 
 1.  Install dependencies:

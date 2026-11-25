@@ -7,6 +7,8 @@ import traceback
 import logging
 import time
 import asyncio
+import math
+from collections import deque
 from contextlib import suppress
 from datetime import datetime, timezone
 from urllib.parse import parse_qs, quote, urlparse
@@ -21,7 +23,10 @@ from src.utils.map_helpers import format_k, count_properties, count_units
 
 logger = logging.getLogger(__name__)
 MAX_MAP_TILES = 80 * 80
-AUTO_PREVIEW_COOLDOWN_SECONDS = 20
+MAX_MAP_LINK_BATCH_SIZE = 5
+MAP_LINK_DEBOUNCE_SECONDS = 2
+MAP_CHANNEL_LIMIT = 10
+MAP_CHANNEL_WINDOW_SECONDS = 60
 
 RE_AWL = re.compile(
     r"(?i)https?://(?:www\.)?awbw\.amarriner\.com/prevmaps\.php\?(?:[^\s#]*?&)?maps_id=(?P<id>[0-9]+)"
@@ -138,6 +143,76 @@ class PersistentMapView(ui.View):
         await interaction.followup.send(embed=embed, ephemeral=True)
 
 
+class MapLinkBatchView(ui.View):
+    """Select an additional map preview without changing the shared message."""
+
+    def __init__(self, cog: "Maps", map_options: list[tuple[int, str]]):
+        super().__init__(timeout=15 * 60)
+        self.cog = cog
+        self.current_map_id = map_options[0][0]
+        self.selector = ui.Select(
+            placeholder="Open another map preview",
+            options=[
+                discord.SelectOption(
+                    label=name[:100],
+                    value=str(map_id),
+                    description=f"Map ID: {map_id}",
+                    default=index == 0,
+                )
+                for index, (map_id, name) in enumerate(map_options)
+            ],
+        )
+        self.selector.callback = self.select_map
+        self.add_item(self.selector)
+
+    async def select_map(self, interaction: discord.Interaction) -> None:
+        map_id = int(self.selector.values[0])
+        if map_id == self.current_map_id:
+            await interaction.response.send_message(
+                "That map is already shown above.", ephemeral=True
+            )
+            return
+
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        result = await self.cog.generate_map_response(
+            map_id, include_optional_data=False
+        )
+        if result is None:
+            await interaction.followup.send(
+                f"I could not load map {map_id}.", ephemeral=True
+            )
+            return
+
+        embed, files, view = result
+        await interaction.followup.send(
+            embed=embed, files=files, view=view, ephemeral=True
+        )
+
+    async def _send_details(
+        self, interaction: discord.Interaction, embed_name: str
+    ) -> None:
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        embed = await self.cog.get_map_detail_embed(self.current_map_id, embed_name)
+        if embed is None:
+            await interaction.followup.send(
+                "I could not load this map's details.", ephemeral=True
+            )
+            return
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
+    @ui.button(label="League Info", emoji="🏆", style=discord.ButtonStyle.secondary)
+    async def league_info(
+        self, interaction: discord.Interaction, button: ui.Button
+    ) -> None:
+        await self._send_details(interaction, "tiers")
+
+    @ui.button(label="Map Details", emoji="ℹ️", style=discord.ButtonStyle.secondary)
+    async def map_details(
+        self, interaction: discord.Interaction, button: ui.Button
+    ) -> None:
+        await self._send_details(interaction, "details")
+
+
 class Maps(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -145,7 +220,10 @@ class Maps(commands.Cog):
         self.league = LeagueRepository(self.repo.client)
         self.renderer = AW2Renderer()
         self.sprite_renderer = DotSpriteRenderer()
-        self._auto_preview_last_seen: dict[tuple[int, int], float] = {}
+        self._map_channel_events: dict[int, deque[float]] = {}
+        self._auto_map_limit_notices: dict[int, float] = {}
+        self._pending_map_link_batches: dict[tuple[int, int], dict] = {}
+        self._pending_map_link_tasks: dict[tuple[int, int], asyncio.Task] = {}
         self._persistent_view = PersistentMapView(self)
 
     async def cog_load(self):
@@ -174,7 +252,35 @@ class Maps(commands.Cog):
         if task is not None:
             with suppress(asyncio.CancelledError):
                 await task
+        for batch_task in self._pending_map_link_tasks.values():
+            batch_task.cancel()
+        self._pending_map_link_tasks.clear()
+        self._pending_map_link_batches.clear()
         await self.repo.close()
+
+    @staticmethod
+    def _window_remaining(
+        events: deque[float], limit: int, window_seconds: int, amount: int, now: float
+    ) -> int:
+        while events and now - events[0] >= window_seconds:
+            events.popleft()
+        if len(events) + amount <= limit:
+            return 0
+        return max(1, math.ceil(window_seconds - (now - events[0])))
+
+    @staticmethod
+    def _record_events(events: deque[float], amount: int, now: float) -> None:
+        events.extend([now] * amount)
+
+    def _take_channel_map_slot(self, channel_id: int) -> int:
+        now = time.monotonic()
+        events = self._map_channel_events.setdefault(channel_id, deque())
+        remaining = self._window_remaining(
+            events, MAP_CHANNEL_LIMIT, MAP_CHANNEL_WINDOW_SECONDS, 1, now
+        )
+        if remaining == 0:
+            self._record_events(events, 1, now)
+        return remaining
 
     def build_embeds(
         self,
@@ -511,10 +617,12 @@ class Maps(commands.Cog):
             return None
 
     async def generate_map_response(
-        self, awbw_id: int
+        self, awbw_id: int, include_optional_data: bool = True
     ) -> tuple[discord.Embed, list[discord.File], ui.View] | None:
         try:
-            map_data = await self.repo.get_map_data(awbw_id)
+            map_data = await self.repo.get_map_data(
+                awbw_id, include_categories=include_optional_data
+            )
             width = int(map_data.get("size_w", 0))
             height = int(map_data.get("size_h", 0))
             if width <= 0 or height <= 0:
@@ -533,11 +641,16 @@ class Maps(commands.Cog):
 
             files = [preview_file]
 
-            league_data = await self.league.get_map_setups(awbw_id)
-            try:
-                map_data["analysis"] = await self.repo.get_map_analysis(awbw_id)
-            except aiohttp.ClientError, asyncio.TimeoutError, ConnectionError:
-                logger.warning("Could not fetch analysis for map %s", awbw_id)
+            league_data = (
+                await self.league.get_map_setups(awbw_id)
+                if include_optional_data
+                else None
+            )
+            if include_optional_data:
+                try:
+                    map_data["analysis"] = await self.repo.get_map_analysis(awbw_id)
+                except aiohttp.ClientError, asyncio.TimeoutError, ConnectionError:
+                    logger.warning("Could not fetch analysis for map %s", awbw_id)
             embeds = self.build_embeds(awbw_id, map_data, preview_filename, league_data)
             view = TabbedMapView(awbw_id, embeds)
 
@@ -731,11 +844,21 @@ class Maps(commands.Cog):
     @app_commands.command(name="map", description="Preview an AWBW map")
     @app_commands.describe(map="The AWBW map URL or ID")
     async def map_preview(self, interaction: discord.Interaction, map: str):
-        await interaction.response.defer()
         map_id = self.parse_map_id(map)
         if map_id is None:
-            await interaction.followup.send("Please provide an AWBW map URL or ID.")
+            await interaction.response.send_message(
+                "Please provide an AWBW map URL or ID."
+            )
             return
+        remaining = self._take_channel_map_slot(interaction.channel_id or 0)
+        if remaining:
+            await interaction.response.send_message(
+                f"Map previews in this channel are limited to {MAP_CHANNEL_LIMIT} per minute. "
+                f"Please wait {remaining} seconds before trying again.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.defer()
         result = await self.generate_map_response(map_id)
         if result:
             embed, files, view = result
@@ -748,7 +871,6 @@ class Maps(commands.Cog):
     @app_commands.command(name="game", description="Preview an AWBW game")
     @app_commands.describe(game="The AWBW game URL or ID")
     async def game_preview(self, interaction: discord.Interaction, game: str):
-        await interaction.response.defer()
         game_reference = RE_GAME.search(game)
         if game_reference:
             game_id = int(game_reference.group("id"))
@@ -757,8 +879,19 @@ class Maps(commands.Cog):
         elif game.isdigit():
             game_id, ndx = int(game), None
         else:
-            await interaction.followup.send("Please provide an AWBW game URL or ID.")
+            await interaction.response.send_message(
+                "Please provide an AWBW game URL or ID."
+            )
             return
+        remaining = self._take_channel_map_slot(interaction.channel_id or 0)
+        if remaining:
+            await interaction.response.send_message(
+                f"Preview posts in this channel are limited to {MAP_CHANNEL_LIMIT} per minute. "
+                f"Please wait {remaining} seconds before trying again.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.defer()
         result = await self.generate_game_response(game_id, ndx)
         if result:
             embed, files, view = result
@@ -771,6 +904,19 @@ class Maps(commands.Cog):
     @app_commands.command(name="profile", description="Preview an AWBW player profile")
     @app_commands.describe(player="An AWBW username or profile URL")
     async def profile_preview(self, interaction: discord.Interaction, player: str):
+        if self.parse_profile_username(player) is None:
+            await interaction.response.send_message(
+                "Please provide a valid AWBW username or profile URL."
+            )
+            return
+        remaining = self._take_channel_map_slot(interaction.channel_id or 0)
+        if remaining:
+            await interaction.response.send_message(
+                f"Preview posts in this channel are limited to {MAP_CHANNEL_LIMIT} per minute. "
+                f"Please wait {remaining} seconds before trying again.",
+                ephemeral=True,
+            )
+            return
         await interaction.response.defer()
         embed = await self.generate_profile_response(player)
         if embed:
@@ -785,6 +931,19 @@ class Maps(commands.Cog):
     )
     @app_commands.describe(map="The AWBW map URL or ID")
     async def sprite_preview(self, interaction: discord.Interaction, map: str):
+        if self.parse_map_id(map) is None:
+            await interaction.response.send_message(
+                "Please provide an AWBW map URL or ID."
+            )
+            return
+        remaining = self._take_channel_map_slot(interaction.channel_id or 0)
+        if remaining:
+            await interaction.response.send_message(
+                f"Map previews in this channel are limited to {MAP_CHANNEL_LIMIT} per minute. "
+                f"Please wait {remaining} seconds before trying again.",
+                ephemeral=True,
+            )
+            return
         await interaction.response.defer()
         result = await self.generate_sprite_response(map)
         if result:
@@ -795,28 +954,115 @@ class Maps(commands.Cog):
                 "Error loading that map. Please provide an AWBW map URL or ID."
             )
 
+    async def _send_map_link_preview(
+        self, message: discord.Message, map_ids: list[int]
+    ) -> None:
+        unique_map_ids = list(dict.fromkeys(map_ids))
+        selected_map_ids = unique_map_ids[:MAX_MAP_LINK_BATCH_SIZE]
+        try:
+            async with message.channel.typing():
+                if len(selected_map_ids) == 1:
+                    result = await self.generate_map_response(selected_map_ids[0])
+                    map_options = []
+                else:
+                    map_data = await asyncio.gather(
+                        *(
+                            self.repo.get_map_data(map_id, include_categories=False)
+                            for map_id in selected_map_ids
+                        ),
+                        return_exceptions=True,
+                    )
+                    map_options = [
+                        (
+                            map_id,
+                            str(data.get("name") or f"Map {map_id}"),
+                        )
+                        if not isinstance(data, Exception)
+                        else (map_id, f"Map {map_id}")
+                        for map_id, data in zip(selected_map_ids, map_data)
+                    ]
+                    result = await self.generate_map_response(selected_map_ids[0])
+
+            if result is None:
+                return
+            embed, files, view = result
+            content = None
+            if map_options:
+                view = MapLinkBatchView(self, map_options)
+                if len(unique_map_ids) > len(selected_map_ids):
+                    content = (
+                        f"Showing the first {len(selected_map_ids)} of "
+                        f"{len(unique_map_ids)} map links."
+                    )
+            await message.reply(
+                content=content,
+                embed=embed,
+                files=files,
+                view=view,
+                mention_author=False,
+            )
+        except Exception:
+            logger.exception("Could not generate map link preview")
+
+    async def _flush_map_link_batch(self, key: tuple[int, int]) -> None:
+        try:
+            await asyncio.sleep(MAP_LINK_DEBOUNCE_SECONDS)
+        except asyncio.CancelledError:
+            return
+
+        batch = self._pending_map_link_batches.pop(key, None)
+        self._pending_map_link_tasks.pop(key, None)
+        if batch is None:
+            return
+
+        message: discord.Message = batch["message"]
+        map_ids: list[int] = batch["map_ids"]
+        channel_id = getattr(message.channel, "id", 0)
+        remaining = self._take_channel_map_slot(channel_id)
+        if remaining:
+            now = time.monotonic()
+            last_notice = self._auto_map_limit_notices.get(channel_id, 0)
+            if now - last_notice >= MAP_CHANNEL_WINDOW_SECONDS:
+                self._auto_map_limit_notices[channel_id] = now
+                await message.reply(
+                    "Automatic map previews in this channel are limited to "
+                    f"{MAP_CHANNEL_LIMIT} per minute. "
+                    f"Please wait {remaining} seconds.",
+                    mention_author=False,
+                )
+            return
+
+        await self._send_map_link_preview(message, map_ids)
+
+    def _queue_map_link_preview(
+        self, message: discord.Message, map_ids: list[int]
+    ) -> None:
+        channel_id = getattr(message.channel, "id", 0)
+        key = (channel_id, message.author.id)
+        batch = self._pending_map_link_batches.setdefault(
+            key, {"message": message, "map_ids": []}
+        )
+        batch["message"] = message
+        queued_ids: list[int] = batch["map_ids"]
+        for map_id in map_ids:
+            if map_id not in queued_ids:
+                queued_ids.append(map_id)
+
+        previous_task = self._pending_map_link_tasks.get(key)
+        if previous_task is not None:
+            previous_task.cancel()
+        self._pending_map_link_tasks[key] = asyncio.create_task(
+            self._flush_map_link_batch(key)
+        )
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot:
             return
-        match = RE_AWL.search(message.content)
-        if match:
+        map_ids = [int(match.group("id")) for match in RE_AWL.finditer(message.content)]
+        if map_ids:
             logger.info("Detected map link in message %s", message.id)
-            now = time.monotonic()
-            channel_id = getattr(message.channel, "id", 0)
-            key = (channel_id, message.author.id)
-            last_seen = self._auto_preview_last_seen.get(key, 0)
-            if now - last_seen < AUTO_PREVIEW_COOLDOWN_SECONDS:
-                return
-            self._auto_preview_last_seen[key] = now
-            preview_id = int(match.group("id"))
-            async with message.channel.typing():
-                result = await self.generate_map_response(preview_id)
-                if result:
-                    embed, files, view = result
-                    await message.reply(
-                        embed=embed, files=files, view=view, mention_author=False
-                    )
+            self._queue_map_link_preview(message, map_ids)
 
 
 async def setup(bot: commands.Bot):

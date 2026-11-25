@@ -10,13 +10,9 @@ BattleMaps Bot brings AWBW maps into Discord. Paste a map link or run `/map <awb
 
 Server owners get a small set of maintenance commands for reloading, syncing, and refreshing map data.
 
-Use `/game <game_id>` for a public game preview. Add the optional `ndx` value to render a replay state from the game's URL. To preview a game link in chat, write `!game` followed by the URL; for example, `!game https://awbw.amarriner.com/game.php?games_id=1756104&ndx=1`.
+Use `/game` with a game ID or URL for a public game preview. Add `ndx` to the URL to render a replay state. `/profile` previews a player profile, and `/sprite` creates a dot-sprite map preview.
 
 Map previews include a private **Map Info** button with property counts and AWBW map-history statistics such as rating, favorites, game count, and average game length. Game previews include player names and only the Preview tab.
-
-## Community code archive
-
-Scripts, snippets, and project links shared by the AWBW community in the "Community Development" thread are indexed in [community-code/README.md](community-code/README.md).
 
 ## Setup
 
